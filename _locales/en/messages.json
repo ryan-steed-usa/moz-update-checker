@@ -1,0 +1,161 @@
+{
+	"extensionName": {
+		"message": "Moz Update Checker",
+		"description": "Name of the extension."
+	},
+	"extensionDescription": {
+		"message": "Check for browser updates.",
+		"description": "Description of the extension."
+	},
+	"browserVersion": {
+		"message": "$BROWSER$",
+		"description": "Table header for the browser version",
+		"placeholders": {
+			"browser": { "content": "$1" }
+		}
+	},
+	"latestVersion": {
+		"message": "Latest",
+		"description": "Table header for the latest version"
+	},
+	"updateInfoHeadline": {
+		"message": "Update Info",
+		"description": "Headline for the link list"
+	},
+	"updateRefreshResult": {
+		"message": "Click to refresh result",
+		"description": "Refresh title for the img div"
+	},
+	"notificationContentUpdate": {
+		"message": "$BROWSER$ $NEWVER$ released, current: $OLDVER$",
+		"description": "Update notification message",
+		"placeholders": {
+			"browser": { "content": "$1" },
+			"oldver": { "content": "$2" },
+			"newver": { "content": "$3" }
+		}
+	},
+	"notificationContentErr": {
+		"message": "Error checking update!",
+		"description": "Error notification message"
+	},
+	"notificationContentUnsupported": {
+		"message": "Unsupported browser!",
+		"description": "Unsupported browser notification message"
+	},
+	"menuOpenSettings": {
+		"message": "Open Settings",
+		"description": "Open Settings menu text"
+	},
+	"managedOptionsWarning": {
+		"message": "Settings are enforced by an administrator.",
+		"description": "Warning text for managed-options enforcement"
+	},
+	"optionAlertType": {
+		"message": "Alert Type",
+		"description": "Option Alert type text"
+	},
+	"optionAlertTypeTitle": {
+		"message": "Sets the alerting option to open a tab, send a browser notification, or both.",
+		"description": "Option Alert Type title text"
+	},
+	"optionTab": {
+		"message": "New Tab",
+		"description": "Option Pop-up text"
+	},
+	"optionNotif": {
+		"message": "Notification",
+		"description": "Option Notification text"
+	},
+	"optionBoth": {
+		"message": "Both",
+		"description": "Option Both text"
+	},
+	"optionDisabled": {
+		"message": "Disabled",
+		"description": "Option Disabled text"
+	},
+	"optionsSave": {
+		"message": "Save Settings",
+		"description": "Option Save Settings button text"
+	},
+	"updateInfoIceCatHome": {
+		"message": "IceCat Home",
+		"description": "Update Info IceCat Home link text"
+	},
+	"updateInfoIceCatGitLog": {
+		"message": "IceCat Git Log",
+		"description": "Update Info IceCat Git Log link text"
+	},
+	"updateInfoLibrewolfHome": {
+		"message": "Librewolf Home",
+		"description": "Update Info Librewolf Home link text"
+	},
+	"updateInfoLibrewolfReleases": {
+		"message": "Librewolf Releases",
+		"description": "Update Info Librewolf Releases link text"
+	},
+	"updateInfoESRAdvisories": {
+		"message": "ESR Security Advisories",
+		"description": "Update Info ESR Security Advisories link text"
+	},
+	"updateInfoESRReleaseNotes": {
+		"message": "ESR Release Notes",
+		"description": "Update Info ESR Release Notes link text"
+	},
+	"updateInfoMozillaAdvisories": {
+		"message": "Mozilla Security Advisories",
+		"description": "Update Info Mozilla Security Advisories link text"
+	},
+	"updateInfoFirefoxNotes": {
+		"message": "Firefox Release Notes",
+		"description": "Update Info Firefox Release Notes link text"
+	},
+	"openOptionsPageLink": {
+		"message": "⚙ Settings",
+		"description": "Open options page text"
+	},
+	"optionAlarmSchedule": {
+		"message": "Alert schedule",
+		"description": "Option Alert schedule text"
+	},
+	"optionAlarmScheduleTitle": {
+		"message": "Sets the schedule to automatically check for updates.",
+		"description": "Option Alarm Schedule title text"
+	},
+	"option4Hours": {
+		"message": "4 Hours",
+		"description": "Option Alarm 4 Hours text"
+	},
+	"option8Hours": {
+		"message": "8 Hours",
+		"description": "Option Alarm 8 Hours text"
+	},
+	"option12Hours": {
+		"message": "12 Hours",
+		"description": "Option Alarm 12 hours text"
+	},
+	"option24Hours": {
+		"message": "24 Hours",
+		"description": "Option Alarm 24 Hours text"
+	},
+	"option2Days": {
+		"message": "2 Days",
+		"description": "Option Alarm 2 Days text"
+	},
+	"option3Days": {
+		"message": "3 Days",
+		"description": "Option Alarm 3 Days text"
+	},
+	"optionsReset": {
+		"message": "Reset Default Settings",
+		"description": "Option Reset Default Settings button text"
+	},
+	"unsupportedBrowser": {
+		"message": "Unsupported browser!",
+		"description": "Header text to display unsupported error"
+	},
+
+	"__WET_LOCALE__": { "message": "en" }
+
+}
