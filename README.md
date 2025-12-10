@@ -35,6 +35,17 @@ The present state is reflected via toolbar icon. Single click of the toolbar ico
 * [IceCat](https://www.gnu.org/software/gnuzilla/) - *For IceCat we parse the commit atom feed, may also break in the future*
 * [LibreWolf](https://librewolf.net/) - *Reads the GitLab API for release builds*
 
+## Privacy
+**No data is collected nor stored by the author.** Some information including origin IP address and add-on extension HTTP request headers are required to be transmitted to remote API/Git endpoints in order to poll for release updates. These endpoints include:
+
+- **Firefox**: "https://product-details.mozilla.org/1.0/firefox_versions.json"
+- **LibreWolf**: "https://gitlab.com/api/v4/projects/44042130/releases.json"
+- **IceCat**: "https://gitweb.git.savannah.gnu.org/gitweb/?p=gnuzilla.git;a=atom"
+
+The author cannot be held liable for the data collection policy instituted by the server administrators of the aforementioned addresses. **Privacy and security are highly valued and important to the author. This extension will always remain transparent and open-source.**
+
+---
+
 ### Inspiration
 [LibreWolf Update Alerter](https://gitlab.com/sams.channel/librewolf-update-alerter) by [Sam St-Pettersen](https://gitlab.com/sams.channel) and [update-notifier](https://github.com/M-Reimer/update-notifier) by [Manuel Reimer](https://github.com/M-Reimer)
 
