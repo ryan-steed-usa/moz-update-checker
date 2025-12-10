@@ -1,7 +1,7 @@
 {
 	"manifest_version": 2,
 	"author": "Ryan Steed",
-	"homepage_url": "https://addons.mozilla.org/en-US/firefox/user/19603726/",
+	"homepage_url": "https://github.com/ryan-steed-usa/moz-update-checker/",
 	"name": "__MSG_extensionName__",
 	"description": "__MSG_extensionDescription__",
 	"browser_specific_settings": {
