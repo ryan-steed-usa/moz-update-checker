@@ -1,0 +1,73 @@
+:root {
+  --page-bg-color: white;
+  --page-fg-color: black;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page-bg-color: #1c1b22;
+    --page-fg-color: whitesmoke;
+  }
+}
+
+body {
+  background-color: var(--page-bg-color);
+  color: var(--page-fg-color);
+  font-family: sans-serif;
+}
+
+h3,
+summary {
+  text-align: center;
+}
+
+a {
+  color: var(--link-color);
+}
+
+a:visited {
+  color: var(--link-visited-color);
+}
+
+th,
+td {
+  padding: 1px 4px 1px 6px;
+}
+
+.image_container,
+.info_container {
+  display: grid;
+  place-items: center;
+}
+
+#info_table {
+  font-size: 0.8em;
+}
+
+#small_image {
+  max-height: 24px !important;
+}
+
+.hidden {
+  display: none;
+}
+
+#open_settings_page {
+  text-align: left;
+}
+
+#open_github_link {
+  text-align: right;
+}
+
+#open_settings_page:hover,
+#open_github_link:hover,
+[id^="img_"]:hover {
+  border-radius: 2em;
+  background-color: hsla(0, 0%, 50%, 0.5);
+}
+
+#unsupported_browser {
+  color: red;
+  background-color: hsla(62, 100%, 55%, 0.5);
+}

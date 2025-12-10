@@ -1,0 +1,172 @@
+<!doctype html>
+<html>
+  <head>
+    <title i18nKey="extensionName">Moz Update Checker</title>
+    <link rel="stylesheet" type="text/css" href="browser_action.css" />
+    <meta name="viewport" content="width=device-width" charset="UTF-8" />
+    <meta name="color-scheme" content="dark light" />
+  </head>
+  <body>
+    <h3 i18nKey="extensionName">Moz Update Checker</h3>
+    <div class="image_container">
+      <img
+        id="img_ok"
+        class="hidden"
+        alt="OK"
+        height="64"
+        width="64"
+        src="../images/status-ok.svg"
+        i18nTitleKey="updateRefreshResult"
+        title="Click to refresh result" />
+      <img
+        id="img_warning"
+        class="hidden"
+        alt="WARNING"
+        height="64"
+        width="64"
+        src="../images/status-warn.svg"
+        i18nTitleKey="updateRefreshResult"
+        title="Click to refresh result" />
+      <img
+        id="img_error"
+        class="hidden"
+        alt="ERROR"
+        height="64"
+        width="64"
+        src="../images/status-error.svg"
+        i18nTitleKey="updateRefreshResult"
+        title="Click to refresh result" />
+      <img
+        id="img_unknown"
+        alt="UNKNOWN"
+        height="64"
+        width="64"
+        src="../images/status-unknown.svg"
+        i18nTitleKey="updateRefreshResult"
+        title="Click to refresh result" />
+    </div>
+    <br />
+    <div class="info_container">
+      <h1 id="unsupported_browser" i18nKey="unsupportedBrowser" class="hidden">
+        Unsupported browser!
+      </h1>
+      <table id="version_table">
+        <tr>
+          <th i18nKey="browserVersion">Browser</th>
+          <th i18nKey="latestVersion">Latest</th>
+        </tr>
+        <tr>
+          <td id="browser_version">UNKNOWN</td>
+          <td id="latest_version">UNKNOWN</td>
+        </tr>
+      </table>
+      <p>
+        <details id="info_details">
+          <summary>🔗<i i18nKey="updateInfoHeadline">Update Info</i></summary>
+          <br />
+          <div>
+            <table id="info_table">
+              <tr class="hidden" id="IceCat">
+                <td>
+                  <a
+                    href="https://www.gnu.org/software/gnuzilla/"
+                    target="_blank"
+                    i18nKey="updateInfoIceCatHome"
+                    >IceCat Home</a
+                  >
+                </td>
+                <td>
+                  <a
+                    href="https://cgit.git.savannah.gnu.org/cgit/gnuzilla.git/log/"
+                    target="_blank"
+                    i18nKey="updateInfoIceCatGitLog"
+                    >IceCat Git Log</a
+                  >
+                </td>
+              </tr>
+              <tr class="hidden" id="LibreWolf">
+                <td>
+                  <a
+                    href="https://librewolf.net/"
+                    target="_blank"
+                    i18nKey="updateInfoLibrewolfHome"
+                    >Librewolf Home</a
+                  >
+                </td>
+                <td>
+                  <a
+                    href="https://codeberg.org/librewolf/source/releases/"
+                    target="_blank"
+                    i18nKey="updateInfoLibrewolfReleases"
+                    >Librewolf Releases</a
+                  >
+                </td>
+              </tr>
+              <tr class="hidden" id="ESR">
+                <td>
+                  <a
+                    href="https://www.mozilla.org/en-US/security/known-vulnerabilities/firefox-esr/"
+                    target="_blank"
+                    i18nKey="updateInfoESRAdvisories"
+                    >ESR Security Advisories</a
+                  >
+                </td>
+                <td>
+                  <a
+                    href="https://www.mozilla.org/firefox/organizations/notes/"
+                    target="_blank"
+                    i18nKey="updateInfoESRReleaseNotes"
+                    >ESR Release Notes</a
+                  >
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://www.mozilla.org/en-US/security/advisories/"
+                    target="_blank"
+                    i18nKey="updateInfoMozillaAdvisories"
+                    >Mozilla Security Advisories</a
+                  >
+                </td>
+                <td>
+                  <a
+                    href="https://www.mozilla.org/en-US/firefox/releases/"
+                    target="_blank"
+                    i18nKey="updateInfoFirefoxNotes"
+                    >Firefox Release Notes</a
+                  >
+                </td>
+              </tr>
+            </table>
+          </div>
+        </details>
+      </p>
+      <div>
+        <table id="footer_table">
+          <tr id="Firefox">
+            <td id="open_settings_page" i18nKey="openOptionsPageLink">
+              ⚙ Settings
+            </td>
+            <td id="open_github_link">
+              <a
+                href="https://github.com/ryan-steed-usa/moz-update-checker"
+                target="_blank">
+                <img
+                  id="small_image"
+                  src="../images/github-mark.svg"
+                  alt="GitHub icon" />
+                <img
+                  id="small_image"
+                  src="../images/GitHub_Logo.png"
+                  alt="GitHub logo" />
+              </a>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+    <script src="../shared_functions.js"></script>
+    <script src="browser_action.js"></script>
+  </body>
+</html>

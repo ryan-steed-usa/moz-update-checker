@@ -1,0 +1,88 @@
+<!doctype html>
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="options.css" />
+    <meta charset="UTF-8" />
+    <meta name="color-scheme" content="dark light" />
+  </head>
+  <body>
+    <div>
+      <p id="managed_options">
+        <b i18nKey="managedOptionsWarning"
+          >Settings are enforced by an administrator.</b
+        >
+      </p>
+      <form id="options_form">
+        <table>
+          <tr>
+            <td>
+              <label for="alert_type"
+                ><b
+                  i18nKey="optionAlertType"
+                  i18nTitleKey="optionAlertTypeTitle"
+                  title="Sets the alerting option to open a tab, send a browser notification, or both."
+                  >Alert type</b
+                ></label
+              >
+            </td>
+            <td class="option-left">
+              <select id="alert_type">
+                <option value="tab" i18nKey="optionTab">New Tab</option>
+                <option value="notif" i18nKey="optionNotif">
+                  Notification
+                </option>
+                <option value="both" i18nKey="optionBoth" selected>Both</option>
+                <option value="disabled" i18nKey="optionDisabled">
+                  Disabled
+                </option>
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <label for="alarm_schedule"
+                ><b
+                  i18nKey="optionAlarmSchedule"
+                  i18nTitleKey="optionAlarmScheduleTitle"
+                  title="Sets the schedule to automatically check for updates."
+                  >Alert schedule</b
+                ></label
+              >
+            </td>
+            <td class="option-right">
+              <select id="alarm_schedule">
+                <option value="240" i18nKey="option4Hours">4 Hours</option>
+                <option value="480" i18nKey="option8Hours">8 Hours</option>
+                <option value="720" i18nKey="option12Hours" selected>
+                  12 Hours
+                </option>
+                <option value="1440" i18nKey="option24Hours">24 Hours</option>
+                <option value="2880" i18nKey="option2Days">2 Days</option>
+                <option value="4320" i18nKey="option3Days">3 Days</option>
+                <option value="0" i18nKey="optionDisabled">Disabled</option>
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td class="option-left">
+              <button type="reset" id="reset_button" i18nKey="optionsReset">
+                Reset Default Settings
+              </button>
+            </td>
+            <td class="option-right">
+              <button
+                type="submit"
+                id="submit_button"
+                i18nKey="optionsSave"
+                disabled>
+                Save Settings
+              </button>
+            </td>
+          </tr>
+        </table>
+      </form>
+    </div>
+    <script src="../shared_functions.js"></script>
+    <script src="options.js"></script>
+  </body>
+</html>

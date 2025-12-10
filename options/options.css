@@ -1,0 +1,49 @@
+:root {
+  --page-bg-color: white;
+  --page-fg-color: #15141a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page-bg-color: #23222b;
+    --page-fg-color: whitesmoke;
+  }
+}
+
+body {
+  background-color: var(--page-bg-color);
+  color: var(--page-fg-color);
+  font-family: sans-serif;
+  font-size: 1.2rem;
+}
+
+div {
+  margin: 4%;
+  display: grid;
+  place-items: left;
+}
+
+#managed_options {
+  display: none;
+  background-color: red;
+}
+
+table,
+th,
+td {
+  border: none;
+}
+
+button,
+select {
+  border: none;
+  font-size: 1.2rem;
+}
+
+.option-right {
+  text-align: right;
+}
+
+.option-left {
+  text-align: left;
+}
