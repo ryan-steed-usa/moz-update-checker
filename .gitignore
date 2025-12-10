@@ -1,0 +1,6 @@
+*.xpi
+node_modules/
+package-lock.json
+package.json
+eslint.config.mjs
+eslint-suppressions.json
