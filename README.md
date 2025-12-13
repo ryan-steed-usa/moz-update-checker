@@ -1,12 +1,14 @@
 # Moz Update Checker
-<ins>*Moz Update Checker*</ins> is a [**WebExtension Manifest V2**](https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/manifest.json/manifest_version) add-on intended to check for [**_Mozilla_**](https://www.mozilla.org) browser updates. Due to the rapidly evolving technological security landscape, browser updates are essential in our modern age. But not all operating systems/configurations permit timely automatic updates and this add-on can especially benefit these circumstances.
+<ins>***Moz Update Checker***</ins> is a [**WebExtension Manifest V2**](https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/manifest.json/manifest_version) add-on intended to check for [**_Mozilla_**](https://www.mozilla.org) browser updates. Due to the rapidly evolving technological security landscape, browser updates are essential in our modern age. But not all operating systems/configurations permit timely automatic updates and this add-on can especially benefit these circumstances.
+
+Available on the ***Mozilla Firefox Add-on repository*** [here](https://addons.mozilla.org/en-US/firefox/addon/moz-update-checker/).
 
 ## Usage
-This extension is particularly useful for [AppImage](https://github.com/AppImage/AppImageKit), [Portable](https://en.wikipedia.org/wiki/Portable_application), [Tarball](), and manually compiled installations. Once installed and when the browser is opened in the future, the current version is compared with the latest available version. If a new version is detected, both a desktop notification and a new tab (by default) will open to display update information.
+This extension is particularly useful for [AppImage](https://github.com/AppImage/AppImageKit), [Portable](https://en.wikipedia.org/wiki/Portable_application), [Tarball](), and manually compiled installations. Once installed, and when the browser is opened in the future, the current version is compared with the latest available version. If a new version is detected, both a desktop notification and a new tab (by default) will open to display update information.
 
 <img width="383" height="381" alt="image" src="https://github.com/user-attachments/assets/25f682ba-2955-45aa-ba86-d9e65d3c1509" />
 
-Updates will then continue to be checked in the background every 12 hours by default. Results are cached to reduce network activity but clicking the status image can force a refresh. Failed network connections are automatically retried 3 times before reaching a failure state.
+Updates will then continue to be checked in the background every 12 hours by default. Results are cached to reduce network activity but clicking the status image on the status page can force a refresh. Failed network connections are automatically retried 3 times before reaching a failure state.
 
 <img width="465" height="273" alt="image" src="https://github.com/user-attachments/assets/6d0b6c5b-359b-4c0c-b717-5c20ed9df801" />
 
