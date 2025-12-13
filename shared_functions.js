@@ -1,6 +1,20 @@
 // Shared functions
 "use strict";
 
+// Dynamic debug
+let DEV_MODE = false;
+
+(async () => {
+  try {
+    // Local storage permits manual toggle
+    const key = "dev_mode";
+    const result = await browser.storage.local.get(key);
+    DEV_MODE = result[key]?.enabled ?? false;
+  } catch {
+    DEV_MODE = false;
+  }
+})();
+
 // Constant variables
 const MOZ_UPDATE_CHECK_APIS = {
   Firefox: "https://product-details.mozilla.org/1.0/firefox_versions.json",
@@ -36,15 +50,6 @@ const setBrowserIcon = (status) => {
     console.error("setBrowserIcon(): failed to set browser icon:", error);
   });
 };
-
-const DEV_MODE = (() => {
-  try {
-    const manifest = browser.runtime.getManifest();
-    return !manifest.update_url;
-  } catch {
-    return false;
-  }
-})();
 
 const alarmScheduler = {
   /*
@@ -150,7 +155,6 @@ const updateChecker = {
 
     while (attempt <= maxRetries) {
       const controller = new AbortController();
-      const signal = controller.signal;
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => {
           controller.abort();
@@ -164,7 +168,7 @@ const updateChecker = {
             `updateChecker.fetchLatestVersion(): fetching ${browserName} version from ${url}, attempt ${attempt + 1}`,
           );
         const response = await Promise.race([
-          fetch(url, { signal }),
+          fetch(url, { cache: "no-cache", signal: controller.signal }),
           timeoutPromise,
         ]);
 

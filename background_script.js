@@ -28,15 +28,15 @@ async function runChecker(useCache = false, scheduled = true) {
 }
 
 // Initialize, loading settings, set defaults, start background processes
-async function init() {
+async function init(status) {
   const defaultSettings = {
     alert_type: "both",
     alarm_schedule: "720",
   };
 
   const clearStates = ["is_latest", "is_running"];
-  clearStates.forEach((key) => {
-    browser.storage.local.remove(key);
+  clearStates.forEach(async (key) => {
+    await browser.storage.local.remove(key);
   });
 
   try {
@@ -74,12 +74,32 @@ async function init() {
     }
 
     if (hasInvalidValues) {
-      if (DEV_MODE)
-        console.debug(
-          "background_script init(): resetting default options",
-          updatesNeeded,
-        );
+      console.error(
+        "background_script init(): resetting default options",
+        updatesNeeded,
+      );
       await browser.storage.sync.set(updatesNeeded);
+    }
+
+    // Local storage permits manual toggle
+    const key = "dev_mode";
+    if (status?.temporary) {
+      await browser.storage.local.set({
+        [key]: {
+          enabled: status.temporary,
+        },
+      });
+    } else {
+      try {
+        const result = await browser.storage.local.get(key);
+        typeof result[key]?.enabled === "boolean";
+      } catch {
+        await browser.storage.local.set({
+          [key]: {
+            enabled: false,
+          },
+        });
+      }
     }
 
     runChecker();
@@ -240,9 +260,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
       try {
         const isTab = sender.tab ? true : false;
         if (!isTab) {
-          const popupTab = browser.runtime.getURL(
-            "browser_action/browser_action.html",
-          );
+          const popupTab = browser.runtime.getURL(BROWSER_ACTION_POPUP_HTML);
           const tabs = await browser.tabs.query({ url: popupTab });
           if (tabs.length > 0) {
             const tab = tabs[0];
