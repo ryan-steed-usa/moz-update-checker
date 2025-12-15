@@ -42,13 +42,23 @@ const getIconConfig = (iconPath) => {
   return { path: pathConfig };
 };
 
-const setBrowserIcon = (status) => {
-  const iconPath = ICON_PATHS[status] || ICON_PATHS.unknown;
-  const iconConfig = getIconConfig(`../${iconPath}`);
+const setBrowserStatus = async (status) => {
+  try {
+    const iconPath = ICON_PATHS[status] || ICON_PATHS.unknown;
+    const iconConfig = getIconConfig(`../${iconPath}`);
+    const extensionTitle = browser.i18n.getMessage(
+      "extensionNameInfo",
+      `: ${status.toUpperCase()}`,
+    );
 
-  return browser.browserAction.setIcon(iconConfig).catch((error) => {
-    console.error("setBrowserIcon(): failed to set browser icon:", error);
-  });
+    await browser.browserAction.setIcon(iconConfig);
+    await browser.browserAction.setTitle({ title: extensionTitle });
+
+    return true;
+  } catch (error) {
+    console.error("setBrowserStatus(): failed to set browser status:", error);
+    return false;
+  }
 };
 
 const alarmScheduler = {
@@ -129,7 +139,7 @@ const updateChecker = {
     browserName,
     url,
     timeoutMs = 30000,
-    maxRetries = 3,
+    maxRetries = 2,
     ttlMs = 5 * 60 * 1000,
   ) {
     // Local storage cache
@@ -142,10 +152,11 @@ const updateChecker = {
     // Lock
     await this.isRunning(true);
 
-    if (cachedEntry && now - cachedEntry.timestamp < ttlMs) {
+    if (this.useCache && cachedEntry && now - cachedEntry.timestamp < ttlMs) {
       if (DEV_MODE)
         console.debug(
-          `updateChecker.fetchLatestVersion(): returning cached ${browserName} version for: ${url}`,
+          `updateChecker.fetchLatestVersion(): returning cached ${browserName} version for: ${url} with ${ttlMs} expiring:`,
+          new Date(cachedEntry.timestamp),
         );
       await this.isRunning(false);
       return cachedEntry.data;
@@ -438,10 +449,15 @@ const updateChecker = {
 
     // Store state
     if (setRunning === true) {
-      if (DEV_MODE) console.debug("updateChecker.isRunning(): set running");
+      const expires = now + expiresMs;
+      if (DEV_MODE)
+        console.debug(
+          "updateChecker.isRunning(): set running, expires:",
+          new Date(expires),
+        );
       await browser.storage.local.set({
         [key]: {
-          expires: now + expiresMs,
+          expires: expires,
         },
       });
       return true;
@@ -576,17 +592,34 @@ const updateChecker = {
 
 const i18nTranslator = async () => {
   // Translate i18n elements
-  const elements = document.querySelectorAll("[i18nKey],[i18nTitleKey]");
+  const elements = document.querySelectorAll(
+    "[i18nKey],[i18nTitleKey],[i18nBrowserKey],[i18nVersionKey]",
+  );
   const { name } = await browser.runtime.getBrowserInfo();
   const browserName = name;
+  const version = await browser.runtime.getManifest().version;
 
   // Loop and translate all matching elements
   elements.forEach((element) => {
     const key = element.getAttribute("i18nKey");
+    const browserKey = element.getAttribute("i18nBrowserKey");
+    const versionKey = element.getAttribute("i18nVersionKey");
     const titleKey = element.getAttribute("i18nTitleKey");
 
     if (key) {
-      const message = browser.i18n.getMessage(key, browserName);
+      const message = browser.i18n.getMessage(key);
+      if (message !== undefined) {
+        element.textContent = message;
+      }
+    }
+    if (browserKey) {
+      const message = browser.i18n.getMessage(browserKey, browserName);
+      if (message !== undefined) {
+        element.textContent = message;
+      }
+    }
+    if (versionKey) {
+      const message = browser.i18n.getMessage(versionKey, ` (v${version})`);
       if (message !== undefined) {
         element.textContent = message;
       }

@@ -10,21 +10,27 @@ async function runChecker(useCache = false, scheduled = true) {
     console.debug(
       `background_script runChecker(): checking for updates, useCache: ${useCache}`,
     );
-  setBrowserIcon("unknown");
+  setBrowserStatus("unknown");
   const isLatest = await updateChecker.isLatest(useCache);
   const latestVersion = await updateChecker.latestVersion;
-  const errorCause = await updateChecker?.error?.cause;
-  if (isLatest) {
-    setBrowserIcon("ok");
-  } else {
-    if (errorCause) {
-      setBrowserIcon("error");
-    } else if (isLatest === null || isLatest === false) {
-      setBrowserIcon("warning");
-    }
-    if (scheduled) sendNotification();
+  const resultError = await updateChecker.error;
+  const resultCause = await updateChecker.error?.cause;
+  if (isLatest === true) {
+    setBrowserStatus("ok");
+  } else if (isLatest !== true && resultCause) {
+    setBrowserStatus("error");
+  } else if (isLatest === null) {
+    setBrowserStatus("error");
+  } else if (isLatest === false) {
+    setBrowserStatus("warning");
   }
-  return { status: isLatest, latest: latestVersion, error: errorCause };
+  if (scheduled && isLatest !== true) sendNotification();
+  return {
+    isLatest: isLatest,
+    latestVersion: latestVersion,
+    error: resultError,
+    errorCause: resultCause,
+  };
 }
 
 // Initialize, loading settings, set defaults, start background processes
@@ -256,26 +262,73 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         "background_script runChecker activated by sender:",
         sender,
       );
+    async function sendRunCheckResponse(result, sendResponse) {
+      try {
+        sendResponse({
+          isLatest: result.isLatest,
+          latestVersion: result.latestVersion,
+          errorCause: result.errorCause,
+        });
+      } catch (err) {
+        if (DEV_MODE)
+          console.warn(
+            "background_script runChecker: destination disconnected before response could be sent:",
+            err,
+          );
+      }
+
+      try {
+        await browser.runtime.sendMessage({
+          action: "runCheckerRefresh",
+          result: {
+            isLatest: result.isLatest,
+            latestVersion: result.latestVersion,
+            errorCause: result.errorCause,
+          },
+        });
+      } catch (err) {
+        if (DEV_MODE)
+          console.warn(
+            "background_script runChecker: could not send runCheckerRefresh message:",
+            err,
+          );
+      }
+    }
     (async () => {
       try {
-        const isTab = sender.tab ? true : false;
-        if (!isTab) {
+        if (!sender.tab) {
+          // Close tab if needed
           const popupTab = browser.runtime.getURL(BROWSER_ACTION_POPUP_HTML);
           const tabs = await browser.tabs.query({ url: popupTab });
           if (tabs.length > 0) {
             const tab = tabs[0];
-            // Close tab
             await browser.tabs.remove(tab.id);
           }
         }
-        const { status, latest, error } = await runChecker(
-          message.use_cache === true ? true : false,
-          false,
+
+        // Run checker function
+        const result = await runChecker(message.use_cache === true, false);
+
+        // Send response
+        await sendRunCheckResponse(
+          {
+            isLatest: result.isLatest,
+            latestVersion: result.latestVersion,
+            errorCause: result.errorCause,
+          },
+          sendResponse,
         );
-        sendResponse({ success: status, latest: latest, error: error });
       } catch (error) {
         console.error("background_script runChecker activation error:", error);
-        sendResponse({ success: null, latest: null, error: error });
+        await sendRunCheckResponse(
+          {
+            isLatest: null,
+            latestVersion: null,
+            error: error,
+            errorCause: error.cause,
+          },
+          sendResponse,
+        );
       }
     })();
   }

@@ -7,6 +7,13 @@
     "message": "Check for browser updates.",
     "description": "Description of the extension."
   },
+  "extensionNameInfo": {
+    "message": "Moz Update Checker$INFO$",
+    "description": "Name of the extention with info appended",
+    "placeholders": {
+      "info": { "content": "$1" }
+    }
+  },
   "browserVersion": {
     "message": "$BROWSER$",
     "description": "Table header for the browser version",

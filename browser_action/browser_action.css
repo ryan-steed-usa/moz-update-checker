@@ -14,6 +14,7 @@ body {
   background-color: var(--page-bg-color);
   color: var(--page-fg-color);
   font-family: sans-serif;
+  min-width: 20rem;
 }
 
 h3,
@@ -29,8 +30,13 @@ a:visited {
   color: var(--link-visited-color);
 }
 
+table {
+  table-layout: fixed;
+}
+
 th,
 td {
+  width: 50%;
   padding: 1px 4px 1px 6px;
 }
 
@@ -42,6 +48,7 @@ td {
 
 #info_table {
   font-size: 0.8em;
+  max-width: 14rem;
 }
 
 #small_image {
@@ -60,8 +67,16 @@ td {
   text-align: right;
 }
 
+#footer_table {
+  min-width: 18rem;
+}
+
 #open_settings_page:hover,
-#open_github_link:hover,
+#open_github_link:hover {
+  border-radius: 0.7em;
+  background-color: hsla(0, 0%, 50%, 0.5);
+}
+
 [id^="img_"]:hover {
   border-radius: 2em;
   background-color: hsla(0, 0%, 50%, 0.5);

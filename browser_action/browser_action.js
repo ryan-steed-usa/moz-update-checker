@@ -1,10 +1,6 @@
 // BrowserAction script
 "use strict";
 
-// Constants
-const TABLE_WIDTH_OFFSET = 120;
-const DEFAULT_TABLE_WIDTH = 420;
-
 // Functions
 function showElement(elementId) {
   const element = document.getElementById(elementId);
@@ -36,29 +32,6 @@ function setTextContent(elementId, text) {
   }
 }
 
-function resizeTables() {
-  try {
-    const versionTable = document.getElementById("version_table");
-    if (!versionTable) return;
-
-    const width =
-      versionTable.offsetWidth + TABLE_WIDTH_OFFSET || DEFAULT_TABLE_WIDTH;
-    const elements = ["info_details", "info_table", "footer_table"];
-
-    elements.forEach((elementId) => {
-      const element = document.getElementById(elementId);
-      if (element) {
-        element.style.width = `${width}px`;
-      }
-    });
-  } catch (error) {
-    console.error(
-      "browser_action resizeTables(): error resizing tables:",
-      error,
-    );
-  }
-}
-
 function openSettingsPage() {
   browser.runtime.openOptionsPage().catch((error) => {
     console.error(
@@ -72,11 +45,14 @@ async function refreshResult(useCache = false) {
   // Update UI elements
   configureInfoDetails();
 
-  // Check for updates and wait for completion
-  await updateCheck(useCache);
+  // Set unknown status
+  await updatePage({});
 
-  // Resize tables
-  resizeTables();
+  // Fire runChecker
+  await browser.runtime.sendMessage({
+    action: "runChecker",
+    use_cache: useCache,
+  });
 }
 
 // Main functions
@@ -107,27 +83,24 @@ function configureInfoDetails() {
   }
 }
 
-async function updateCheck(useCache = true) {
+async function updatePage(response) {
   // Temporary status
   hideElements("[id^='img_']");
   showElement("img_unknown");
 
-  const response = await browser.runtime.sendMessage({
-    action: "runChecker",
-    use_cache: useCache,
-  });
-  const isLatest = response.success;
-  const latestVersion = response.latest;
-  const errorCause = response.error;
+  const isLatest = response.isLatest;
+  const latestVersion = response.latestVersion;
+  const errorCause = response.errorCause;
+  const infoDetails = document.getElementById("info_details");
 
   if (DEV_MODE)
     console.debug(
-      "browser_action updateCheck(): runChecker response:",
+      "browser_action updatePage(): runChecker response:",
       response,
     );
   if (DEV_MODE && errorCause)
     console.debug(
-      "browser_action updateCheck(): runChecker errorCause:",
+      "browser_action updatePage(): runChecker errorCause:",
       errorCause,
     );
 
@@ -140,25 +113,19 @@ async function updateCheck(useCache = true) {
   if (isLatest === true) {
     hideElement("img_unknown");
     showElement("img_ok");
-    return;
   } else if (isLatest !== true && errorCause) {
     hideElement("img_unknown");
     showElement("img_error");
     if (errorCause === "unsupported") showElement("unsupported_browser");
-    return;
   } else if (isLatest === null) {
     hideElement("img_unknown");
     showElement("img_error");
-    return;
   } else if (isLatest === false) {
     hideElement("img_unknown");
     showElement("img_warning");
-  }
 
-  // Open details when update detected
-  const infoDetails = document.getElementById("info_details");
-  if (infoDetails) {
-    infoDetails.open = true;
+    // Open details when update detected
+    if (infoDetails) infoDetails.open = true;
   }
 }
 
@@ -188,17 +155,16 @@ function startEventListeners() {
       await refreshResult(false);
     });
   });
-  // Listen for refresh
-  browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.action === "performRefresh") {
+  // Listen for response
+  browser.runtime.onMessage.addListener((message) => {
+    if (message.action === "runCheckerRefresh") {
       if (DEV_MODE)
-        console.debug(`Performing refresh from tab: ${message.from_tab}`);
-      (async () => {
-        setTimeout(() => {
-          window.location.reload();
-        });
-        sendResponse({ success: true });
-      })();
+        console.debug(
+          "browser_action event listener received runCheckerRefresh message:",
+          message,
+        );
+      configureInfoDetails();
+      updatePage(message.result);
     }
     return true;
   });
