@@ -6,7 +6,7 @@ Available on the ***Mozilla Firefox Add-on repository*** [here](https://addons.m
 ## Usage
 This extension is particularly useful for [AppImage](https://github.com/AppImage/AppImageKit), [Portable](https://en.wikipedia.org/wiki/Portable_application), [Tarball](), and manually compiled installations. Once installed, and when the browser is opened in the future, the current version is compared with the latest available version. If a new version is detected, both a desktop notification and a new tab (by default) will open to display update information.
 
-<img width="383" height="381" alt="image" src="https://github.com/user-attachments/assets/25f682ba-2955-45aa-ba86-d9e65d3c1509" />
+<img width="502" height="476" alt="image" src="https://github.com/user-attachments/assets/ee7c4c7e-12c2-4d9b-9aa2-83db98bd3949" />
 
 Updates will then continue to be checked in the background every 12 hours by default. Results are cached to reduce network activity but clicking the status image on the status page can force a refresh. Failed network connections are automatically retried 3 times before reaching a failure state.
 
@@ -15,6 +15,10 @@ Updates will then continue to be checked in the background every 12 hours by def
 The present state is reflected via toolbar icon. Single click of the toolbar icon opens the add-on pop-up view and middle-click opens the tab page. Settings and links are also available as links from these pages.
 
 <img width="206" height="176" alt="image" src="https://github.com/user-attachments/assets/9f4ff473-24c5-4af4-bfc4-1958cc69993c" />
+
+<img width="416" height="109" alt="image" src="https://github.com/user-attachments/assets/67af63e5-a755-4631-968f-74d1ae8183ee" />
+
+<img width="286" height="111" alt="image" src="https://github.com/user-attachments/assets/7019df8f-5ade-4280-9b73-8cc360a09daa" />
 
 ## Options
 **Alert type** and **Alert schedule** are both customizable.
