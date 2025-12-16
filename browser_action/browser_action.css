@@ -37,7 +37,8 @@ table {
 th,
 td {
   width: 50%;
-  padding: 1px 4px 1px 6px;
+  min-width: 14ch;
+  text-align: center;
 }
 
 .image_container,
@@ -49,6 +50,27 @@ td {
 #info_table {
   font-size: 0.8em;
   max-width: 14rem;
+}
+
+[id^="th_"] {
+  border-radius: 0.3em;
+  color: whitesmoke;
+  background-color: rgba(255, 255, 255, 0.3);
+  mix-blend-mode: difference;
+}
+
+#browser_version,
+#latest_version {
+  border-radius: 0.2em;
+  color: whitesmoke;
+  background-color: rgba(255, 255, 255, 0.2);
+  mix-blend-mode: difference;
+}
+
+#last_checked {
+  font-size: 0.85em;
+  color: rgba(255, 255, 255, 0.6);
+  mix-blend-mode: difference;
 }
 
 #small_image {
@@ -68,12 +90,12 @@ td {
 }
 
 #footer_table {
-  min-width: 18rem;
+  min-width: 16rem;
 }
 
 #open_settings_page:hover,
 #open_github_link:hover {
-  border-radius: 0.7em;
+  border-radius: 0.5em;
   background-color: hsla(0, 0%, 50%, 0.5);
 }
 
@@ -82,7 +104,7 @@ td {
   background-color: hsla(0, 0%, 50%, 0.5);
 }
 
-#unsupported_browser {
+#error_status {
   color: red;
   background-color: hsla(62, 100%, 55%, 0.5);
 }

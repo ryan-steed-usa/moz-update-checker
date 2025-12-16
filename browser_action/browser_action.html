@@ -47,13 +47,16 @@
     </div>
     <br />
     <div class="info_container">
-      <h1 id="unsupported_browser" i18nKey="unsupportedBrowser" class="hidden">
-        Unsupported browser!
+      <h1 id="error_status" i18nKey="notificationContentErr" class="hidden">
+        Error checking update!
       </h1>
+      <div id="last_checked">TEST</div>
       <table id="version_table">
         <tr>
-          <th i18nBrowserKey="browserVersion">Browser</th>
-          <th i18nKey="latestVersion">Latest</th>
+          <th id="th_browser_version" i18nBrowserKey="browserVersion">
+            Browser
+          </th>
+          <th id="th_latest_version" i18nKey="latestVersion">Latest</th>
         </tr>
         <tr>
           <td id="browser_version">UNKNOWN</td>

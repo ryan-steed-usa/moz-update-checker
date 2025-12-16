@@ -131,6 +131,7 @@ const updateChecker = {
   browserName: null,
   browserVersion: null,
   error: null,
+  lastChecked: null,
   latestVersion: null,
 
   // Fetches the latest release with timeout, caching (with default 5 minute TTL), and retry support
@@ -487,6 +488,7 @@ const updateChecker = {
     const key = "is_latest";
     const result = await browser.storage.local.get(key);
     const stateEntry = result[key];
+    const now = Date.now();
 
     if (!useCache && stateEntry) await browser.storage.local.remove(key);
 
@@ -515,7 +517,7 @@ const updateChecker = {
         );
       if (DEV_MODE && useCache && stateEntry)
         console.debug(
-          `updateChecker.isLatest(): using cached responses, latest: ${stateEntry.latest}, result: ${stateEntry.result}`,
+          `updateChecker.isLatest(): using cached responses, latest: ${stateEntry.latest}, result: ${stateEntry.result}, timestamp: ${stateEntry.timestamp}`,
         );
 
       // Fetch latest version
@@ -536,7 +538,9 @@ const updateChecker = {
 
       if (useCache && typeof stateEntry?.latest === "string") {
         this.latestVersion = stateEntry.latest;
+        this.lastChecked = stateEntry.timestamp;
       } else {
+        this.lastChecked = now;
         switch (this.browserName) {
           case "Firefox":
             this.latestVersion = this.detectFirefoxRelease(
@@ -576,6 +580,7 @@ const updateChecker = {
           [key]: {
             latest: this.latestVersion,
             result: result,
+            timestamp: this.lastChecked,
           },
         });
       }

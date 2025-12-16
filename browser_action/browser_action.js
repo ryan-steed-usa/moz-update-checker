@@ -86,10 +86,13 @@ function configureInfoDetails() {
 async function updatePage(response) {
   // Temporary status
   hideElements("[id^='img_']");
+  hideElement("error_status");
   showElement("img_unknown");
+  showLatestVersion("UNKNOWN");
 
   const isLatest = response.isLatest;
   const latestVersion = response.latestVersion;
+  const lastChecked = response.lastChecked;
   const errorCause = response.errorCause;
   const infoDetails = document.getElementById("info_details");
 
@@ -110,16 +113,32 @@ async function updatePage(response) {
   // Show version information
   showLatestVersion(latestVersion);
 
+  if (typeof lastChecked === "number") {
+    const dateChecked = new Date(lastChecked).toLocaleString();
+    setTextContent(
+      "last_checked",
+      `${browser.i18n.getMessage("lastChecked")} ${dateChecked}`,
+    );
+  }
+
   if (isLatest === true) {
     hideElement("img_unknown");
     showElement("img_ok");
   } else if (isLatest !== true && errorCause) {
     hideElement("img_unknown");
     showElement("img_error");
-    if (errorCause === "unsupported") showElement("unsupported_browser");
+    showElement("error_status");
+    showLatestVersion("ERROR");
+    if (errorCause === "unsupported")
+      setTextContent(
+        "error_status",
+        browser.i18n.getMessage("unsupportedBrowser"),
+      );
   } else if (isLatest === null) {
     hideElement("img_unknown");
     showElement("img_error");
+    showElement("error_status");
+    showLatestVersion("ERROR");
   } else if (isLatest === false) {
     hideElement("img_unknown");
     showElement("img_warning");
@@ -133,7 +152,7 @@ function showLatestVersion(latestVersion) {
   if (typeof latestVersion === "string") {
     setTextContent("latest_version", latestVersion);
   } else {
-    setTextContent("latest_version", "ERROR");
+    setTextContent("latest_version", "UNKNOWN");
   }
 }
 

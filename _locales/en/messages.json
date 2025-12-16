@@ -21,6 +21,10 @@
       "browser": { "content": "$1" }
     }
   },
+  "lastChecked": {
+    "message": "Checked",
+    "description": "Div last checked text"
+  },
   "latestVersion": {
     "message": "Latest",
     "description": "Table header for the latest version"

@@ -12,6 +12,7 @@ async function runChecker(useCache = false, scheduled = true) {
     );
   setBrowserStatus("unknown");
   const isLatest = await updateChecker.isLatest(useCache);
+  const lastChecked = await updateChecker.lastChecked;
   const latestVersion = await updateChecker.latestVersion;
   const resultError = await updateChecker.error;
   const resultCause = await updateChecker.error?.cause;
@@ -24,13 +25,15 @@ async function runChecker(useCache = false, scheduled = true) {
   } else if (isLatest === false) {
     setBrowserStatus("warning");
   }
-  if (scheduled && isLatest !== true) sendNotification();
-  return {
+  const result = {
     isLatest: isLatest,
+    lastChecked: lastChecked,
     latestVersion: latestVersion,
     error: resultError,
     errorCause: resultCause,
   };
+  if (scheduled && isLatest !== true) sendNotification(result);
+  return result;
 }
 
 // Initialize, loading settings, set defaults, start background processes
@@ -147,12 +150,13 @@ async function openTab() {
 }
 
 // Conditionally send a notification
-async function sendNotification() {
-  let result = {};
+async function sendNotification(result) {
+  const { name, version } = await browser.runtime.getBrowserInfo();
+  let settings = {};
 
   // Attempt to retrieve configuration from managed storage first (e.g., enterprise policy)
   try {
-    result = await browser.storage.managed.get();
+    settings = await browser.storage.managed.get();
   } catch {
     if (DEV_MODE)
       console.debug(
@@ -161,9 +165,9 @@ async function sendNotification() {
   }
 
   // Fallback to sync storage if no valid config found
-  if (!result || Object.keys(result).length === 0) {
+  if (!settings || Object.keys(settings).length === 0) {
     try {
-      result = await browser.storage.sync.get();
+      settings = await browser.storage.sync.get();
     } catch (error) {
       console.warn(
         "background_script sendNotification(): failed to load sync storage:",
@@ -172,7 +176,7 @@ async function sendNotification() {
     }
   }
 
-  const alertType = result?.alert_type;
+  const alertType = settings?.alert_type;
 
   // Open a new tab
   if (alertType === "tab" || alertType === "both") {
@@ -182,16 +186,16 @@ async function sendNotification() {
   // Send desktop notification
   if (alertType === "notif" || alertType === "both") {
     let content = browser.i18n.getMessage("notificationContentUpdate", [
-      updateChecker.browserName,
-      updateChecker.browserVersion,
-      updateChecker.latestVersion,
+      name,
+      version,
+      result.latestVersion,
     ]);
     let iconUrl = browser.runtime.getURL("images/status-warn.svg");
 
     // Handle errors during version check
-    if (updateChecker.error) {
+    if (result.error) {
       let message = "notificationContentErr";
-      if (updateChecker.error.cause === "unsupported") {
+      if (result.errorCause === "unsupported") {
         // Force notifications and disable alarm for unsupported browsers
         message = "notificationContentUnsupported";
         console.error("background_script sendNotification(): disabling alarm");
@@ -263,12 +267,14 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sender,
       );
     async function sendRunCheckResponse(result, sendResponse) {
+      const response = {
+        isLatest: result.isLatest,
+        lastChecked: result.lastChecked,
+        latestVersion: result.latestVersion,
+        errorCause: result.errorCause,
+      };
       try {
-        sendResponse({
-          isLatest: result.isLatest,
-          latestVersion: result.latestVersion,
-          errorCause: result.errorCause,
-        });
+        sendResponse(response);
       } catch (err) {
         if (DEV_MODE)
           console.warn(
@@ -280,11 +286,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
       try {
         await browser.runtime.sendMessage({
           action: "runCheckerRefresh",
-          result: {
-            isLatest: result.isLatest,
-            latestVersion: result.latestVersion,
-            errorCause: result.errorCause,
-          },
+          result: response,
         });
       } catch (err) {
         if (DEV_MODE)
@@ -313,6 +315,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         await sendRunCheckResponse(
           {
             isLatest: result.isLatest,
+            lastChecked: result.lastChecked,
             latestVersion: result.latestVersion,
             errorCause: result.errorCause,
           },
@@ -323,6 +326,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         await sendRunCheckResponse(
           {
             isLatest: null,
+            lastChecked: null,
             latestVersion: null,
             error: error,
             errorCause: error.cause,
