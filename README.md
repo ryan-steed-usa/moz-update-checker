@@ -6,7 +6,7 @@ Available on the ***Mozilla Firefox Add-on repository*** [here](https://addons.m
 ## Usage
 This extension is particularly useful for [AppImage](https://github.com/AppImage/AppImageKit), [Portable](https://en.wikipedia.org/wiki/Portable_application), [Tarball](), and manually compiled installations. Once installed, and when the browser is opened in the future, the current version is compared with the latest available version. If a new version is detected, both a desktop notification and a new tab (by default) will open to display update information.
 
-<img width="502" height="476" alt="image" src="https://github.com/user-attachments/assets/ee7c4c7e-12c2-4d9b-9aa2-83db98bd3949" />
+<img width="434" height="429" alt="image" src="https://github.com/user-attachments/assets/6fb30c5d-adbd-4e01-b4c5-b43d616e43a1" />
 
 Updates will then continue to be checked in the background every 12 hours by default. Results are cached to reduce network activity but clicking the status image on the status page can force a refresh. Failed network connections are automatically retried 3 times before reaching a failure state.
 
