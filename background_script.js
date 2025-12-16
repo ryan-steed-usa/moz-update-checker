@@ -4,36 +4,14 @@
 // Constants
 const BROWSER_ACTION_POPUP_HTML = "browser_action/browser_action.html";
 
-// Run the update check
-async function runChecker(useCache = false, scheduled = true) {
-  if (DEV_MODE)
-    console.debug(
-      `background_script runChecker(): checking for updates, useCache: ${useCache}`,
-    );
-  setBrowserStatus("unknown");
-  const isLatest = await updateChecker.isLatest(useCache);
-  const lastChecked = await updateChecker.lastChecked;
-  const latestVersion = await updateChecker.latestVersion;
-  const resultError = await updateChecker.error;
-  const resultCause = await updateChecker.error?.cause;
-  if (isLatest === true) {
-    setBrowserStatus("ok");
-  } else if (isLatest !== true && resultCause) {
-    setBrowserStatus("error");
-  } else if (isLatest === null) {
-    setBrowserStatus("error");
-  } else if (isLatest === false) {
-    setBrowserStatus("warning");
+// Close browser status tab
+async function closeBrowserStatusTab() {
+  const popupTab = browser.runtime.getURL(BROWSER_ACTION_POPUP_HTML);
+  const tabs = await browser.tabs.query({ url: popupTab });
+  if (tabs.length > 0) {
+    const tab = tabs[0];
+    await browser.tabs.remove(tab.id);
   }
-  const result = {
-    isLatest: isLatest,
-    lastChecked: lastChecked,
-    latestVersion: latestVersion,
-    error: resultError,
-    errorCause: resultCause,
-  };
-  if (scheduled && isLatest !== true) sendNotification(result);
-  return result;
 }
 
 // Initialize, loading settings, set defaults, start background processes
@@ -122,7 +100,7 @@ async function init(status) {
 }
 
 // Tab handler
-async function openTab() {
+async function openBrowserStatusTab() {
   const popupTab = browser.runtime.getURL(BROWSER_ACTION_POPUP_HTML);
 
   try {
@@ -147,6 +125,48 @@ async function openTab() {
       error,
     );
   }
+}
+
+// Run the update check
+async function runChecker(useCache = false, scheduled = true) {
+  if (DEV_MODE)
+    console.debug(
+      `background_script runChecker(): checking for updates, useCache: ${useCache}`,
+    );
+
+  // Set unknown status
+  if (!useCache) setBrowserStatus("unknown");
+
+  const isLatest = await updateChecker.isLatest(useCache);
+  const lastChecked = await updateChecker.lastChecked;
+  const latestVersion = await updateChecker.latestVersion;
+  const resultError = await updateChecker.error;
+  const resultCause = await updateChecker.error?.cause;
+
+  if (isLatest === true) {
+    setBrowserStatus("ok");
+  } else if (isLatest !== true && resultCause) {
+    setBrowserStatus("error");
+  } else if (isLatest === null) {
+    setBrowserStatus("error");
+  } else if (isLatest === false) {
+    setBrowserStatus("warn");
+  } else {
+    setBrowserStatus("unknown");
+  }
+
+  const result = {
+    useCache: useCache,
+    isLatest: isLatest,
+    lastChecked: lastChecked,
+    latestVersion: latestVersion,
+    error: resultError,
+    errorCause: resultCause,
+  };
+
+  if (scheduled && isLatest !== true) sendNotification(result);
+
+  return result;
 }
 
 // Conditionally send a notification
@@ -180,7 +200,8 @@ async function sendNotification(result) {
 
   // Open a new tab
   if (alertType === "tab" || alertType === "both") {
-    await openTab();
+    await closeBrowserStatusTab();
+    await openBrowserStatusTab();
   }
 
   // Send desktop notification
@@ -190,7 +211,7 @@ async function sendNotification(result) {
       version,
       result.latestVersion,
     ]);
-    let iconUrl = browser.runtime.getURL("images/status-warn.svg");
+    let iconUrl = browser.runtime.getURL(ICON_PATHS["warn"]);
 
     // Handle errors during version check
     if (result.error) {
@@ -206,7 +227,7 @@ async function sendNotification(result) {
         await alarmScheduler.update();
       }
       content = browser.i18n.getMessage(message);
-      iconUrl = browser.runtime.getURL("images/status-error.svg");
+      iconUrl = browser.runtime.getURL(ICON_PATHS["error"]);
     }
 
     await browser.notifications.create({
@@ -223,7 +244,7 @@ browser.runtime.onStartup.addListener(init);
 browser.runtime.onInstalled.addListener(init);
 
 // Listen for click
-browser.browserAction.onClicked.addListener(openTab);
+browser.browserAction.onClicked.addListener(openBrowserStatusTab);
 
 // Schedule alarm to poll for updates
 browser.alarms.onAlarm.addListener(runChecker);
@@ -232,7 +253,7 @@ browser.alarms.onAlarm.addListener(runChecker);
 browser.menus.create({
   id: "open_options",
   title: browser.i18n.getMessage("menuOpenSettings"),
-  icons: { 128: "images/status-ok.svg" },
+  icons: { 128: ICON_PATHS["unknown"] },
   contexts: ["browser_action"],
 });
 
@@ -268,6 +289,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
       );
     async function sendRunCheckResponse(result, sendResponse) {
       const response = {
+        useCache: result.useCache,
         isLatest: result.isLatest,
         lastChecked: result.lastChecked,
         latestVersion: result.latestVersion,
@@ -300,12 +322,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
       try {
         if (!sender.tab) {
           // Close tab if needed
-          const popupTab = browser.runtime.getURL(BROWSER_ACTION_POPUP_HTML);
-          const tabs = await browser.tabs.query({ url: popupTab });
-          if (tabs.length > 0) {
-            const tab = tabs[0];
-            await browser.tabs.remove(tab.id);
-          }
+          await closeBrowserStatusTab();
         }
 
         // Run checker function
@@ -314,6 +331,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // Send response
         await sendRunCheckResponse(
           {
+            useCache: result.useCache,
             isLatest: result.isLatest,
             lastChecked: result.lastChecked,
             latestVersion: result.latestVersion,
@@ -325,6 +343,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         console.error("background_script runChecker activation error:", error);
         await sendRunCheckResponse(
           {
+            useCache: false,
             isLatest: null,
             lastChecked: null,
             latestVersion: null,

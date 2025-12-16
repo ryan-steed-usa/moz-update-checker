@@ -46,7 +46,9 @@ async function refreshResult(useCache = false) {
   configureInfoDetails();
 
   // Set unknown status
-  await updatePage({});
+  if (!useCache) {
+    await updatePage({});
+  }
 
   // Fire runChecker
   await browser.runtime.sendMessage({
@@ -84,11 +86,14 @@ function configureInfoDetails() {
 }
 
 async function updatePage(response) {
-  // Temporary status
-  hideElements("[id^='img_']");
-  hideElement("error_status");
-  showElement("img_unknown");
-  showLatestVersion("UNKNOWN");
+  const useCache = response.useCache;
+  if (!useCache) {
+    // Temporary status
+    hideElements("[id^='img_']");
+    hideElement("error_status");
+    showElement("img_unknown");
+    showLatestVersion("UNKNOWN");
+  }
 
   const isLatest = response.isLatest;
   const latestVersion = response.latestVersion;
@@ -145,6 +150,11 @@ async function updatePage(response) {
 
     // Open details when update detected
     if (infoDetails) infoDetails.open = true;
+  } else {
+    hideElements("[id^='img_']");
+    hideElement("error_status");
+    showElement("img_unknown");
+    showLatestVersion("UNKNOWN");
   }
 }
 

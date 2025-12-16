@@ -28,7 +28,7 @@ const SUPPORTED_BROWSERS = ["LibreWolf", "IceCat"];
 const ICON_PATHS = {
   ok: "images/status-ok.svg",
   error: "images/status-error.svg",
-  warning: "images/status-warn.svg",
+  warn: "images/status-warn.svg",
   unknown: "images/status-unknown.svg",
 };
 
