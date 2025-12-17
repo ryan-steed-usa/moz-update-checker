@@ -2,10 +2,10 @@
 "use strict";
 
 // Functions
-function showElement(elementId) {
-  const element = document.getElementById(elementId);
-  if (element) {
-    element.classList.remove("hidden");
+function configureInfoDetails() {
+  const infoDetails = document.getElementById("info_details");
+  if (infoDetails) {
+    infoDetails.open = false;
   }
 }
 
@@ -25,11 +25,8 @@ function hideElements(selector) {
   });
 }
 
-function setTextContent(elementId, text) {
-  const element = document.getElementById(elementId);
-  if (element) {
-    element.textContent = text || "";
-  }
+async function init() {
+  await refreshResult(true);
 }
 
 function openSettingsPage() {
@@ -57,7 +54,13 @@ async function refreshResult(useCache = false) {
   });
 }
 
-// Main functions
+function setTextContent(elementId, text) {
+  const element = document.getElementById(elementId);
+  if (element) {
+    element.textContent = text || "";
+  }
+}
+
 async function showBrowserInfo(latestVersion) {
   try {
     const { name, version } = await browser.runtime.getBrowserInfo();
@@ -78,11 +81,47 @@ async function showBrowserInfo(latestVersion) {
   }
 }
 
-function configureInfoDetails() {
-  const infoDetails = document.getElementById("info_details");
-  if (infoDetails) {
-    infoDetails.open = false;
+function showElement(elementId) {
+  const element = document.getElementById(elementId);
+  if (element) {
+    element.classList.remove("hidden");
   }
+}
+
+function showLatestVersion(latestVersion) {
+  if (typeof latestVersion === "string") {
+    setTextContent("latest_version", latestVersion);
+  } else {
+    setTextContent("latest_version", "UNKNOWN");
+  }
+}
+
+function startEventListeners() {
+  // Open settings page
+  const settingsButton = document.getElementById("open_settings_page");
+  if (settingsButton) {
+    settingsButton.addEventListener("click", openSettingsPage);
+  }
+  // Refresh result
+  const refreshButtons = document.querySelectorAll("[id^='img_']");
+  refreshButtons.forEach((element) => {
+    element.addEventListener("click", async () => {
+      await refreshResult(false);
+    });
+  });
+  // Listen for response
+  browser.runtime.onMessage.addListener((message) => {
+    if (message.action === "runCheckerRefresh") {
+      if (DEV_MODE)
+        console.debug(
+          "browser_action event listener received runCheckerRefresh message:",
+          message,
+        );
+      configureInfoDetails();
+      updatePage(message.result);
+    }
+    return true;
+  });
 }
 
 async function updatePage(response) {
@@ -156,47 +195,6 @@ async function updatePage(response) {
     showElement("img_unknown");
     showLatestVersion("UNKNOWN");
   }
-}
-
-function showLatestVersion(latestVersion) {
-  if (typeof latestVersion === "string") {
-    setTextContent("latest_version", latestVersion);
-  } else {
-    setTextContent("latest_version", "UNKNOWN");
-  }
-}
-
-async function init() {
-  await refreshResult(true);
-}
-
-// Events
-function startEventListeners() {
-  // Open settings page
-  const settingsButton = document.getElementById("open_settings_page");
-  if (settingsButton) {
-    settingsButton.addEventListener("click", openSettingsPage);
-  }
-  // Refresh result
-  const refreshButtons = document.querySelectorAll("[id^='img_']");
-  refreshButtons.forEach((element) => {
-    element.addEventListener("click", async () => {
-      await refreshResult(false);
-    });
-  });
-  // Listen for response
-  browser.runtime.onMessage.addListener((message) => {
-    if (message.action === "runCheckerRefresh") {
-      if (DEV_MODE)
-        console.debug(
-          "browser_action event listener received runCheckerRefresh message:",
-          message,
-        );
-      configureInfoDetails();
-      updatePage(message.result);
-    }
-    return true;
-  });
 }
 
 // Wait for DOM

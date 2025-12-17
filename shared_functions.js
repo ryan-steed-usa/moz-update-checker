@@ -33,34 +33,6 @@ const ICON_PATHS = {
 };
 
 // Constant functions
-const getIconConfig = (iconPath) => {
-  const sizes = [16, 24, 32, 48, 64, 96, 128];
-  const pathConfig = {};
-  sizes.forEach((size) => {
-    pathConfig[size] = iconPath;
-  });
-  return { path: pathConfig };
-};
-
-const setBrowserStatus = async (status) => {
-  try {
-    const iconPath = ICON_PATHS[status] || ICON_PATHS.unknown;
-    const iconConfig = getIconConfig(`../${iconPath}`);
-    const extensionTitle = browser.i18n.getMessage(
-      "extensionNameInfo",
-      `: ${status.toUpperCase()}`,
-    );
-
-    await browser.browserAction.setIcon(iconConfig);
-    await browser.browserAction.setTitle({ title: extensionTitle });
-
-    return true;
-  } catch (error) {
-    console.error("setBrowserStatus(): failed to set browser status:", error);
-    return false;
-  }
-};
-
 const alarmScheduler = {
   /*
    * Updates or creates a recurring alarm to poll for updates
@@ -127,116 +99,83 @@ const alarmScheduler = {
   },
 };
 
+const getIconConfig = (iconPath) => {
+  const sizes = [16, 24, 32, 48, 64, 96, 128];
+  const pathConfig = {};
+  sizes.forEach((size) => {
+    pathConfig[size] = iconPath;
+  });
+  return { path: pathConfig };
+};
+
+const i18nTranslator = async () => {
+  // Translate i18n elements
+  const elements = document.querySelectorAll(
+    "[i18nKey],[i18nTitleKey],[i18nBrowserKey],[i18nVersionKey]",
+  );
+  const { name } = await browser.runtime.getBrowserInfo();
+  const browserName = name;
+  const version = await browser.runtime.getManifest().version;
+
+  // Loop and translate all matching elements
+  elements.forEach((element) => {
+    const key = element.getAttribute("i18nKey");
+    const browserKey = element.getAttribute("i18nBrowserKey");
+    const versionKey = element.getAttribute("i18nVersionKey");
+    const titleKey = element.getAttribute("i18nTitleKey");
+
+    if (key) {
+      const message = browser.i18n.getMessage(key);
+      if (message !== undefined) {
+        element.textContent = message;
+      }
+    }
+    if (browserKey) {
+      const message = browser.i18n.getMessage(browserKey, browserName);
+      if (message !== undefined) {
+        element.textContent = message;
+      }
+    }
+    if (versionKey) {
+      const message = browser.i18n.getMessage(versionKey, ` (v${version})`);
+      if (message !== undefined) {
+        element.textContent = message;
+      }
+    }
+    if (titleKey) {
+      const title = browser.i18n.getMessage(titleKey);
+      if (title !== undefined) {
+        element.title = title;
+      }
+    }
+  });
+};
+
+const setBrowserStatus = async (status) => {
+  try {
+    const iconPath = ICON_PATHS[status] || ICON_PATHS.unknown;
+    const iconConfig = getIconConfig(`../${iconPath}`);
+    const extensionTitle = browser.i18n.getMessage(
+      "extensionNameInfo",
+      `: ${status.toUpperCase()}`,
+    );
+
+    await browser.browserAction.setIcon(iconConfig);
+    await browser.browserAction.setTitle({ title: extensionTitle });
+
+    return true;
+  } catch (error) {
+    console.error("setBrowserStatus(): failed to set browser status:", error);
+    return false;
+  }
+};
+
 const updateChecker = {
   browserName: null,
   browserVersion: null,
   error: null,
   lastChecked: null,
   latestVersion: null,
-
-  // Fetches the latest release with timeout, caching (with default 5 minute TTL), and retry support
-  // Uses local storage for cross-context persistence
-  fetchLatestVersion: async function (
-    browserName,
-    url,
-    timeoutMs = 30000,
-    maxRetries = 2,
-    ttlMs = 5 * 60 * 1000,
-  ) {
-    // Local storage cache
-    const key = `version_cache_${browserName}`;
-    const result = await browser.storage.local.get(key);
-    const cachedEntry = result[key];
-
-    const now = Date.now();
-
-    // Lock
-    await this.isRunning(true);
-
-    if (this.useCache && cachedEntry && now - cachedEntry.timestamp < ttlMs) {
-      if (DEV_MODE)
-        console.debug(
-          `updateChecker.fetchLatestVersion(): returning cached ${browserName} version for: ${url} with ${ttlMs} expiring:`,
-          new Date(cachedEntry.timestamp),
-        );
-      await this.isRunning(false);
-      return cachedEntry.data;
-    }
-
-    let attempt = 0;
-
-    while (attempt <= maxRetries) {
-      const controller = new AbortController();
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => {
-          controller.abort();
-          reject(new Error("Timeout"));
-        }, timeoutMs),
-      );
-
-      try {
-        if (DEV_MODE)
-          console.debug(
-            `updateChecker.fetchLatestVersion(): fetching ${browserName} version from ${url}, attempt ${attempt + 1}`,
-          );
-        const response = await Promise.race([
-          fetch(url, { cache: "no-cache", signal: controller.signal }),
-          timeoutPromise,
-        ]);
-
-        if (!response.ok) {
-          console.warn(
-            `updateChecker.fetchLatestVersion(): HTTP error! status: ${response.status} for ${browserName} URL: ${url}`,
-          );
-          attempt++;
-          continue;
-        }
-
-        const responseData =
-          browserName === "IceCat"
-            ? await response.text()
-            : await response.json();
-
-        // Save to storage cache
-        await browser.storage.local.set({
-          [key]: {
-            data: responseData,
-            timestamp: now,
-          },
-        });
-
-        await this.isRunning(false);
-        return responseData || null;
-      } catch (error) {
-        attempt++;
-        console.warn(
-          `updateChecker.fetchLatestVersion(): ${browserName} attempt ${attempt} failed:`,
-          error,
-        );
-
-        if (attempt > maxRetries) {
-          this.error = error;
-          console.error(
-            `updateChecker.fetchLatestVersion(): ${browserName} max retries exceeded.`,
-            error,
-          );
-          await this.isRunning(false);
-          return null;
-        }
-
-        // Backoff delay
-        const delay = Math.pow(2, attempt) * 1000;
-        if (DEV_MODE)
-          console.debug(
-            `updateChecker.fetchLatestVersion(): ${browserName} retrying in ${delay / 1000}s...`,
-          );
-        await new Promise((r) => setTimeout(r, delay));
-      }
-    }
-
-    await this.isRunning(false);
-    return null;
-  },
 
   // Compares two semantic version strings with optional release suffix
   compareVersions: function (browserName, latest) {
@@ -382,104 +321,108 @@ const updateChecker = {
     }
   },
 
-  // Parse git log for latest IceCat release
-  parseIceCatVersion: function (xmlText) {
-    if (typeof xmlText !== "string" || xmlText === "") {
-      if (DEV_MODE)
-        console.debug(
-          "updateChecker.parseIceCatVersion(): xmlText input must be non-empty string",
-        );
-      return null;
-    }
-    const splitBySpace = (s) => s?.split(" ")[2] || "";
-    const stripSuffix = (s) => s?.split("-")[0] || s;
-
-    // Simple XML parsing
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(xmlText, "text/xml");
-
-    const entries = xmlDoc.getElementsByTagName("entry");
-    const versions = [];
-
-    // Read last 10 commit titles
-    for (let i = 0; i < Math.min(entries.length, 10); i++) {
-      const entry = entries[i];
-      const title = entry.getElementsByTagName("title")[0]?.textContent || "";
-      const updated =
-        entry.getElementsByTagName("updated")[0]?.textContent || "";
-
-      // Update commits seem to adhere to format of: "Update to 140.5.0-2."
-      if (title.includes("Update to")) {
-        // Extract version string
-        const version = splitBySpace(title);
-        if (version.includes(".")) {
-          versions.push({
-            version: stripSuffix(version),
-            updated: new Date(updated),
-          });
-        }
-      }
-    }
-
-    if (DEV_MODE)
-      console.debug("updateChecker.parseIceCatVersion(): versions:", versions);
-
-    if (versions.length === 0) {
-      if (DEV_MODE)
-        console.debug(
-          "updateChecker.parseIceCatVersion(): error parsing IceCat git atom feed",
-        );
-      return null;
-    }
-
-    const mostRecent = versions.reduce(
-      (latest, current) => (current.updated > latest.date ? current : latest),
-      versions[0],
-    );
-    return mostRecent.version;
-  },
-
-  // Store and check status to share with extension and tab contexts
-  isRunning: async function (setRunning = null, expiresMs = 2 * 60 * 1000) {
-    // Local storage
-    const key = "is_running";
+  // Fetches the latest release with timeout, caching (with default 5 minute TTL), and retry support
+  // Uses local storage for cross-context persistence
+  fetchLatestVersion: async function (
+    browserName,
+    url,
+    timeoutMs = 30000,
+    maxRetries = 2,
+    ttlMs = 5 * 60 * 1000,
+  ) {
+    // Local storage cache
+    const key = `version_cache_${browserName}`;
     const result = await browser.storage.local.get(key);
-    const stateEntry = result[key];
+    const cachedEntry = result[key];
 
     const now = Date.now();
 
-    // Store state
-    if (setRunning === true) {
-      const expires = now + expiresMs;
+    // Lock
+    await this.isRunning(true);
+
+    if (this.useCache && cachedEntry && now - cachedEntry.timestamp < ttlMs) {
       if (DEV_MODE)
         console.debug(
-          "updateChecker.isRunning(): set running, expires:",
-          new Date(expires),
+          `updateChecker.fetchLatestVersion(): returning cached ${browserName} version for: ${url} with ${ttlMs} expiring:`,
+          new Date(cachedEntry.timestamp),
         );
-      await browser.storage.local.set({
-        [key]: {
-          expires: expires,
-        },
-      });
-      return true;
+      await this.isRunning(false);
+      return cachedEntry.data;
     }
 
-    if (setRunning === false) {
-      if (DEV_MODE) console.debug("updateChecker.isRunning(): clear running");
-      if (stateEntry) await browser.storage.local.remove(key);
-      return false;
-    }
+    let attempt = 0;
 
-    if (stateEntry && stateEntry.expires > now) {
-      if (DEV_MODE)
-        console.debug(
-          "updateChecker.isRunning(): still running, expires:",
-          new Date(stateEntry.expires),
+    while (attempt <= maxRetries) {
+      const controller = new AbortController();
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => {
+          controller.abort();
+          reject(new Error("Timeout"));
+        }, timeoutMs),
+      );
+
+      try {
+        if (DEV_MODE)
+          console.debug(
+            `updateChecker.fetchLatestVersion(): fetching ${browserName} version from ${url}, attempt ${attempt + 1}`,
+          );
+        const response = await Promise.race([
+          fetch(url, { cache: "no-cache", signal: controller.signal }),
+          timeoutPromise,
+        ]);
+
+        if (!response.ok) {
+          console.warn(
+            `updateChecker.fetchLatestVersion(): HTTP error! status: ${response.status} for ${browserName} URL: ${url}`,
+          );
+          attempt++;
+          continue;
+        }
+
+        const responseData =
+          browserName === "IceCat"
+            ? await response.text()
+            : await response.json();
+
+        // Save to storage cache
+        await browser.storage.local.set({
+          [key]: {
+            data: responseData,
+            timestamp: now,
+          },
+        });
+
+        await this.isRunning(false);
+        return responseData || null;
+      } catch (error) {
+        attempt++;
+        console.warn(
+          `updateChecker.fetchLatestVersion(): ${browserName} attempt ${attempt} failed:`,
+          error,
         );
-      return true;
+
+        if (attempt > maxRetries) {
+          this.error = error;
+          console.error(
+            `updateChecker.fetchLatestVersion(): ${browserName} max retries exceeded.`,
+            error,
+          );
+          await this.isRunning(false);
+          return null;
+        }
+
+        // Backoff delay
+        const delay = Math.pow(2, attempt) * 1000;
+        if (DEV_MODE)
+          console.debug(
+            `updateChecker.fetchLatestVersion(): ${browserName} retrying in ${delay / 1000}s...`,
+          );
+        await new Promise((r) => setTimeout(r, delay));
+      }
     }
 
-    return false;
+    await this.isRunning(false);
+    return null;
   },
 
   // Main method to check if the browser is up-to-date
@@ -593,47 +536,104 @@ const updateChecker = {
       return null;
     }
   },
-};
 
-const i18nTranslator = async () => {
-  // Translate i18n elements
-  const elements = document.querySelectorAll(
-    "[i18nKey],[i18nTitleKey],[i18nBrowserKey],[i18nVersionKey]",
-  );
-  const { name } = await browser.runtime.getBrowserInfo();
-  const browserName = name;
-  const version = await browser.runtime.getManifest().version;
+  // Store and check status to share with extension and tab contexts
+  isRunning: async function (setRunning = null, expiresMs = 2 * 60 * 1000) {
+    // Local storage
+    const key = "is_running";
+    const result = await browser.storage.local.get(key);
+    const stateEntry = result[key];
 
-  // Loop and translate all matching elements
-  elements.forEach((element) => {
-    const key = element.getAttribute("i18nKey");
-    const browserKey = element.getAttribute("i18nBrowserKey");
-    const versionKey = element.getAttribute("i18nVersionKey");
-    const titleKey = element.getAttribute("i18nTitleKey");
+    const now = Date.now();
 
-    if (key) {
-      const message = browser.i18n.getMessage(key);
-      if (message !== undefined) {
-        element.textContent = message;
+    // Store state
+    if (setRunning === true) {
+      const expires = now + expiresMs;
+      if (DEV_MODE)
+        console.debug(
+          "updateChecker.isRunning(): set running, expires:",
+          new Date(expires),
+        );
+      await browser.storage.local.set({
+        [key]: {
+          expires: expires,
+        },
+      });
+      return true;
+    }
+
+    if (setRunning === false) {
+      if (DEV_MODE) console.debug("updateChecker.isRunning(): clear running");
+      if (stateEntry) await browser.storage.local.remove(key);
+      return false;
+    }
+
+    if (stateEntry && stateEntry.expires > now) {
+      if (DEV_MODE)
+        console.debug(
+          "updateChecker.isRunning(): still running, expires:",
+          new Date(stateEntry.expires),
+        );
+      return true;
+    }
+
+    return false;
+  },
+
+  // Parse git log for latest IceCat release
+  parseIceCatVersion: function (xmlText) {
+    if (typeof xmlText !== "string" || xmlText === "") {
+      if (DEV_MODE)
+        console.debug(
+          "updateChecker.parseIceCatVersion(): xmlText input must be non-empty string",
+        );
+      return null;
+    }
+    const splitBySpace = (s) => s?.split(" ")[2] || "";
+    const stripSuffix = (s) => s?.split("-")[0] || s;
+
+    // Simple XML parsing
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+
+    const entries = xmlDoc.getElementsByTagName("entry");
+    const versions = [];
+
+    // Read last 10 commit titles
+    for (let i = 0; i < Math.min(entries.length, 10); i++) {
+      const entry = entries[i];
+      const title = entry.getElementsByTagName("title")[0]?.textContent || "";
+      const updated =
+        entry.getElementsByTagName("updated")[0]?.textContent || "";
+
+      // Update commits seem to adhere to format of: "Update to 140.5.0-2."
+      if (title.includes("Update to")) {
+        // Extract version string
+        const version = splitBySpace(title);
+        if (version.includes(".")) {
+          versions.push({
+            version: stripSuffix(version),
+            updated: new Date(updated),
+          });
+        }
       }
     }
-    if (browserKey) {
-      const message = browser.i18n.getMessage(browserKey, browserName);
-      if (message !== undefined) {
-        element.textContent = message;
-      }
+
+    if (DEV_MODE)
+      console.debug("updateChecker.parseIceCatVersion(): versions:", versions);
+
+    if (versions.length === 0) {
+      if (DEV_MODE)
+        console.debug(
+          "updateChecker.parseIceCatVersion(): error parsing IceCat git atom feed",
+        );
+      return null;
     }
-    if (versionKey) {
-      const message = browser.i18n.getMessage(versionKey, ` (v${version})`);
-      if (message !== undefined) {
-        element.textContent = message;
-      }
-    }
-    if (titleKey) {
-      const title = browser.i18n.getMessage(titleKey);
-      if (title !== undefined) {
-        element.title = title;
-      }
-    }
-  });
+
+    const mostRecent = versions.reduce(
+      (latest, current) => (current.updated > latest.date ? current : latest),
+      versions[0],
+    );
+    return mostRecent.version;
+  },
 };
