@@ -16,6 +16,8 @@ let DEV_MODE = false;
 })();
 
 // Constant variables
+const ALARM_DEFAULT_MINUTES = 720;
+const ALARM_MINIMUM_MINUTES = 240;
 const MOZ_UPDATE_CHECK_APIS = {
   Firefox: "https://product-details.mozilla.org/1.0/firefox_versions.json",
   LibreWolf: "https://gitlab.com/api/v4/projects/44042130/releases.json",
@@ -39,7 +41,6 @@ const alarmScheduler = {
    */
   update: async function () {
     try {
-      const ALARM_DEFAULT_MINUTES = 720;
       const ALARM_NAME = "moz-update-checker";
 
       // Fetch stored schedule value
@@ -408,16 +409,19 @@ const updateChecker = {
             error,
           );
           await this.isRunning(false);
-          return null;
+          throw new Error(
+            `updateChecker.fetchLatestVersion(): ${browserName} max retries exceeded.`,
+            { cause: "timedout" },
+          );
         }
 
-        // Backoff delay
-        const delay = Math.pow(2, attempt) * 1000;
+        // Add exponential backoff with jitter
+        const backoffDelay = Math.pow(2, attempt) * 1000 + Math.random() * 1000; // Add jitter
         if (DEV_MODE)
           console.debug(
-            `updateChecker.fetchLatestVersion(): ${browserName} retrying in ${delay / 1000}s...`,
+            `updateChecker.fetchLatestVersion(): ${browserName} retrying in ${backoffDelay / 1000}s...`,
           );
-        await new Promise((r) => setTimeout(r, delay));
+        await new Promise((r) => setTimeout(r, backoffDelay));
       }
     }
 

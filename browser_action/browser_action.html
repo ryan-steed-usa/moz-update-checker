@@ -8,55 +8,35 @@
   </head>
   <body>
     <h3 i18nVersionKey="extensionNameInfo">Moz Update Checker</h3>
-    <div class="image_container">
-      <img
-        id="img_ok"
-        class="hidden"
-        alt="OK"
-        height="64"
-        width="64"
-        src="../images/status-ok.svg"
-        i18nTitleKey="updateRefreshResult"
-        title="Click to refresh result" />
-      <img
-        id="img_warning"
-        class="hidden"
-        alt="WARNING"
-        height="64"
-        width="64"
-        src="../images/status-warn.svg"
-        i18nTitleKey="updateRefreshResult"
-        title="Click to refresh result" />
-      <img
-        id="img_error"
-        class="hidden"
-        alt="ERROR"
-        height="64"
-        width="64"
-        src="../images/status-error.svg"
-        i18nTitleKey="updateRefreshResult"
-        title="Click to refresh result" />
-      <img
-        id="img_unknown"
-        alt="UNKNOWN"
-        height="64"
-        width="64"
-        src="../images/status-unknown.svg"
-        i18nTitleKey="updateRefreshResult"
-        title="Click to refresh result" />
+    <div id="image_container">
+      <div class="tooltip">
+        <span i18nkey="clickToRefresh" id="img_tooltip" class="tooltip_text"
+          >Click to refresh result</span
+        >
+        <img
+          id="status_image"
+          alt="UNKNOWN"
+          height="64"
+          width="64"
+          src="../images/status-unknown.svg" />
+      </div>
+      <div id="loading_spinner" class="hidden"></div>
     </div>
     <br />
-    <div class="info_container">
-      <h1 id="error_status" i18nKey="notificationContentErr" class="hidden">
+    <div id="info_container">
+      <h2 id="error_status" i18nKey="notificationContentErr" class="hidden">
         Error checking update!
-      </h1>
-      <div id="last_checked">Checked UNKNOWN</div>
+      </h2>
+      <div class="tooltip">
+        <span id="last_checked">Last checked UNKNOWN</span
+        ><span id="checked_tooltip" class="tooltip_text">unknown date</span>
+      </div>
       <table id="version_table">
         <tr>
-          <th id="th_browser_version" i18nBrowserKey="browserVersion">
+          <th class="version_header" i18nBrowserKey="browserVersion">
             Browser
           </th>
-          <th id="th_latest_version" i18nKey="latestVersion">Latest</th>
+          <th class="version_header" i18nKey="latestVersion">Latest</th>
         </tr>
         <tr>
           <td id="browser_version">UNKNOWN</td>
@@ -69,7 +49,7 @@
           <br />
           <div>
             <table id="info_table">
-              <tr class="hidden" id="IceCat">
+              <tr id="IceCat" class="hidden">
                 <td>
                   <a
                     href="https://www.gnu.org/software/gnuzilla/"
@@ -87,7 +67,7 @@
                   >
                 </td>
               </tr>
-              <tr class="hidden" id="LibreWolf">
+              <tr id="LibreWolf" class="hidden">
                 <td>
                   <a
                     href="https://librewolf.net/"
@@ -105,7 +85,7 @@
                   >
                 </td>
               </tr>
-              <tr class="hidden" id="ESR">
+              <tr id="ESR" class="hidden">
                 <td>
                   <a
                     href="https://www.mozilla.org/en-US/security/known-vulnerabilities/firefox-esr/"

@@ -22,7 +22,7 @@
     }
   },
   "lastChecked": {
-    "message": "Checked",
+    "message": "Last checked",
     "description": "Div last checked text"
   },
   "latestVersion": {
@@ -33,7 +33,7 @@
     "message": "Update Info",
     "description": "Headline for the link list"
   },
-  "updateRefreshResult": {
+  "clickToRefresh": {
     "message": "Click to refresh result",
     "description": "Refresh title for the img div"
   },
@@ -45,6 +45,10 @@
       "oldver": { "content": "$2" },
       "newver": { "content": "$3" }
     }
+  },
+  "notificationContentErrTimedOut": {
+    "message": "Connection timed out.",
+    "description": "Timeout notification message"
   },
   "notificationContentErr": {
     "message": "Error checking update!",
@@ -161,6 +165,38 @@
   "optionsReset": {
     "message": "Reset Default Settings",
     "description": "Option Reset Default Settings button text"
+  },
+  "relativeAgo": {
+    "message": "ago",
+    "description": "Relative time conversion ago text"
+  },
+  "relativeDay": {
+    "message": "day",
+    "description": "Relative time conversion day text"
+  },
+  "relativeDays": {
+    "message": "days",
+    "description": "Relative time conversion days text"
+  },
+  "relativeHour": {
+    "message": "hour",
+    "description": "Relative time conversion hour text"
+  },
+  "relativeHours": {
+    "message": "hours",
+    "description": "Relative time conversion hours text"
+  },
+  "relativeMinute": {
+    "message": "minute",
+    "description": "Relative time conversion minute text"
+  },
+  "relativeMinutes": {
+    "message": "minutes",
+    "description": "Relative time conversion minutes text"
+  },
+  "relativeNow": {
+    "message": "just now",
+    "description": "Relative time conversion now text"
   },
   "unsupportedBrowser": {
     "message": "Unsupported browser!",

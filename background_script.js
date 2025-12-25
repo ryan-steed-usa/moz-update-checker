@@ -18,7 +18,7 @@ async function closeBrowserStatusTab() {
 async function init(status) {
   const defaultSettings = {
     alert_type: "both",
-    alarm_schedule: "720",
+    alarm_schedule: String(ALARM_DEFAULT_MINUTES),
   };
 
   const clearStates = ["is_latest", "is_running"];
@@ -47,7 +47,8 @@ async function init(status) {
             return (
               typeof currentValue === "string" &&
               /^\d+$/.test(currentValue) &&
-              parseInt(currentValue, 10) >= 240
+              (parseInt(currentValue, 10) === 0 ||
+                parseInt(currentValue, 10) >= ALARM_MINIMUM_MINUTES)
             );
           default:
             return false;
@@ -89,6 +90,7 @@ async function init(status) {
       }
     }
 
+    closeBrowserStatusTab();
     runChecker();
     await alarmScheduler.update();
   } catch (error) {
@@ -138,17 +140,20 @@ async function runChecker(useCache = false, scheduled = true) {
   if (!useCache) setBrowserStatus("unknown");
 
   const isLatest = await updateChecker.isLatest(useCache);
-  const lastChecked = await updateChecker.lastChecked;
-  const latestVersion = await updateChecker.latestVersion;
-  const resultError = await updateChecker.error;
-  const resultCause = await updateChecker.error?.cause;
+  const isRunning = await updateChecker.isRunning();
+  const latestVersion = updateChecker.latestVersion;
+  const resultError = updateChecker.error;
+  const resultCause = updateChecker.error?.cause;
+  let lastChecked = updateChecker.lastChecked;
 
   if (isLatest === true) {
     setBrowserStatus("ok");
-  } else if (isLatest !== true && resultCause) {
+  } else if (isLatest !== true && resultCause && isRunning !== true) {
     setBrowserStatus("error");
+    lastChecked = null;
   } else if (isLatest === null) {
     setBrowserStatus("error");
+    lastChecked = null;
   } else if (isLatest === false) {
     setBrowserStatus("warn");
   } else {
@@ -158,6 +163,7 @@ async function runChecker(useCache = false, scheduled = true) {
   const result = {
     useCache: useCache,
     isLatest: isLatest,
+    isRunning: isRunning,
     lastChecked: lastChecked,
     latestVersion: latestVersion,
     error: resultError,
@@ -226,6 +232,9 @@ async function sendNotification(result) {
         });
         await alarmScheduler.update();
       }
+      if (result.errorCause === "timedout") {
+        message = "notificationContentErrTimedOut";
+      }
       content = browser.i18n.getMessage(message);
       iconUrl = browser.runtime.getURL(ICON_PATHS["error"]);
     }
@@ -291,6 +300,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const response = {
         useCache: result.useCache,
         isLatest: result.isLatest,
+        isRunning: result.isRunning,
         lastChecked: result.lastChecked,
         latestVersion: result.latestVersion,
         errorCause: result.errorCause,
@@ -333,6 +343,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
           {
             useCache: result.useCache,
             isLatest: result.isLatest,
+            isRunning: result.isRunning,
             lastChecked: result.lastChecked,
             latestVersion: result.latestVersion,
             errorCause: result.errorCause,
@@ -345,6 +356,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
           {
             useCache: false,
             isLatest: null,
+            isRunning: false,
             lastChecked: null,
             latestVersion: null,
             error: error,

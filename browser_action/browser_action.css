@@ -41,10 +41,11 @@ td {
   text-align: center;
 }
 
-.image_container,
-.info_container {
+#image_container,
+#info_container {
   display: grid;
   place-items: center;
+  position: relative;
 }
 
 #info_table {
@@ -52,7 +53,7 @@ td {
   max-width: 14rem;
 }
 
-[id^="th_"] {
+.version_header {
   border-radius: 0.3em;
   color: whitesmoke;
   background-color: rgba(255, 255, 255, 0.3);
@@ -99,7 +100,7 @@ td {
   background-color: hsla(0, 0%, 50%, 0.5);
 }
 
-[id^="img_"]:hover {
+.tooltip:hover > #status_image {
   border-radius: 2em;
   background-color: hsla(0, 0%, 50%, 0.5);
 }
@@ -107,4 +108,71 @@ td {
 #error_status {
   color: red;
   background-color: hsla(62, 100%, 55%, 0.5);
+}
+
+#loading_spinner {
+  animation: spin 1.75s linear infinite;
+  border: 6px solid rgba(255, 255, 255, 0.3);
+  border-top: 6px solid whitesmoke;
+  border-radius: 50%;
+  mix-blend-mode: difference;
+  position: absolute;
+  height: 64px;
+  width: 64px;
+  margin-top: -0.25rem;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.tooltip {
+  display: inline-block;
+  position: relative;
+}
+
+.tooltip_text {
+  visibility: hidden;
+  font-size: smaller;
+  background-color: rgba(255, 255, 255, 0.25);
+  color: whitesmoke;
+  text-align: center;
+  border-radius: 0.6rem;
+  mix-blend-mode: difference;
+  padding: 0.25em;
+  position: absolute;
+  opacity: 0;
+  transition: opacity 0.8s;
+}
+
+#img_tooltip {
+  width: 6rem;
+  margin-left: +2.25rem;
+  margin-top: -1.5rem;
+}
+
+#checked_tooltip {
+  width: max-content;
+  margin-left: -5rem;
+  margin-top: -1.25rem;
+}
+
+.tooltip:hover #img_tooltip.tooltip_text {
+  opacity: 1;
+  visibility: visible;
+}
+
+.tooltip:hover #checked_tooltip.tooltip_text {
+  opacity: 1;
+  visibility: visible;
+}
+
+.show-tooltip {
+  opacity: 1;
+  visibility: visible;
 }
