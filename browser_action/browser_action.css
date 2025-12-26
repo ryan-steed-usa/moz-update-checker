@@ -119,7 +119,7 @@ td {
   position: absolute;
   height: 64px;
   width: 64px;
-  margin-top: -0.25rem;
+  top: auto;
 }
 
 @keyframes spin {
@@ -132,7 +132,7 @@ td {
 }
 
 .tooltip {
-  display: inline-block;
+  display: grid;
   position: relative;
 }
 
@@ -151,15 +151,15 @@ td {
 }
 
 #img_tooltip {
-  width: 6rem;
-  margin-left: +2.25rem;
-  margin-top: -1.5rem;
+  width: 100%;
+  right: -100%;
+  top: -45%;
 }
 
 #checked_tooltip {
   width: max-content;
-  margin-left: -10rem;
-  margin-top: -1.25rem;
+  justify-content: center;
+  top: -95%;
 }
 
 .tooltip:hover #img_tooltip.tooltip_text {

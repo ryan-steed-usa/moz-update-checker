@@ -17,7 +17,7 @@ let DEV_MODE = false;
 
 // Constant variables
 const ALARM_DEFAULT_MINUTES = 720;
-const ALARM_MINIMUM_MINUTES = 240;
+const ALARM_MINIMUM_MINUTES = DEV_MODE ? 1 : 240;
 const MOZ_UPDATE_CHECK_APIS = {
   Firefox: "https://product-details.mozilla.org/1.0/firefox_versions.json",
   LibreWolf: "https://gitlab.com/api/v4/projects/44042130/releases.json",
@@ -109,6 +109,12 @@ const getIconConfig = (iconPath) => {
   return { path: pathConfig };
 };
 
+const hideElement = (element) => {
+  if (element) {
+    element.classList.add("hidden");
+  }
+};
+
 const i18nTranslator = async () => {
   // Translate i18n elements
   const elements = document.querySelectorAll(
@@ -168,6 +174,12 @@ const setBrowserStatus = async (status) => {
   } catch (error) {
     console.error("setBrowserStatus(): failed to set browser status:", error);
     return false;
+  }
+};
+
+const showElement = (element) => {
+  if (element) {
+    element.classList.remove("hidden");
   }
 };
 
@@ -344,7 +356,7 @@ const updateChecker = {
     if (this.useCache && cachedEntry && now - cachedEntry.timestamp < ttlMs) {
       if (DEV_MODE)
         console.debug(
-          `updateChecker.fetchLatestVersion(): returning cached ${browserName} version for: ${url} with ${ttlMs} expiring:`,
+          `updateChecker.fetchLatestVersion(): returning cached ${browserName} version for: ${url} with ${ttlMs} expiring ${cachedEntry.timestamp}:`,
           new Date(cachedEntry.timestamp),
         );
       await this.isRunning(false);
@@ -409,10 +421,6 @@ const updateChecker = {
             error,
           );
           await this.isRunning(false);
-          throw new Error(
-            `updateChecker.fetchLatestVersion(): ${browserName} max retries exceeded.`,
-            { cause: "timedout" },
-          );
         }
 
         // Add exponential backoff with jitter
@@ -555,7 +563,7 @@ const updateChecker = {
       const expires = now + expiresMs;
       if (DEV_MODE)
         console.debug(
-          "updateChecker.isRunning(): set running, expires:",
+          `updateChecker.isRunning(): set running, expires ${expires}:`,
           new Date(expires),
         );
       await browser.storage.local.set({
@@ -575,7 +583,7 @@ const updateChecker = {
     if (stateEntry && stateEntry.expires > now) {
       if (DEV_MODE)
         console.debug(
-          "updateChecker.isRunning(): still running, expires:",
+          `updateChecker.isRunning(): still running, expires ${stateEntry.expires}:`,
           new Date(stateEntry.expires),
         );
       return true;

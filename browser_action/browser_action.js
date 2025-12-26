@@ -2,6 +2,8 @@
 "use strict";
 
 // Functions
+const getElement = (id) => document.getElementById(id);
+
 function calculateRelativeTime(timestamp) {
   if (typeof timestamp === "number") {
     const now = Date.now();
@@ -24,25 +26,16 @@ function calculateRelativeTime(timestamp) {
   }
 }
 
-function changeImage(imageId) {
-  const element = document.getElementById("status_image");
+function changeImage(element, imageId) {
   if (element) {
     element.alt = `${imageId.toLowerCase()}`;
     element.src = `../${ICON_PATHS[imageId]}`;
   }
 }
 
-function configureInfoDetails() {
-  const infoDetails = document.getElementById("info_details");
-  if (infoDetails) {
-    infoDetails.open = false;
-  }
-}
-
-function hideElement(elementId) {
-  const element = document.getElementById(elementId);
+function configureInfoDetails(element) {
   if (element) {
-    element.classList.add("hidden");
+    element.open = false;
   }
 }
 
@@ -59,7 +52,7 @@ async function init() {
     });
   }
 
-  showTooltip("#img_tooltip.tooltip_text");
+  showTooltip(getElement("img_tooltip"));
 
   await refreshResult(true);
 }
@@ -75,7 +68,7 @@ function openSettingsPage() {
 
 async function refreshResult(useCache = false) {
   // Update UI elements
-  configureInfoDetails();
+  configureInfoDetails(getElement("info_details"));
 
   // Set unknown status
   if (!useCache) {
@@ -89,8 +82,7 @@ async function refreshResult(useCache = false) {
   });
 }
 
-function setTextContent(elementId, text) {
-  const element = document.getElementById(elementId);
+function setTextContent(element, text) {
   if (element) {
     element.textContent = text || "";
   }
@@ -100,13 +92,13 @@ async function showBrowserInfo(latestVersion) {
   try {
     const { name, version } = await browser.runtime.getBrowserInfo();
     const isESR = latestVersion?.includes("esr");
-    setTextContent("browser_version", version);
+    setTextContent(getElement("browser_version"), version);
 
     if (SUPPORTED_BROWSERS.includes(name)) {
       showElement(name);
     }
     if (isESR) {
-      showElement("ESR");
+      showElement(getElement("ESR"));
     }
   } catch (error) {
     console.error(
@@ -116,29 +108,22 @@ async function showBrowserInfo(latestVersion) {
   }
 }
 
-function showElement(elementId) {
-  const element = document.getElementById(elementId);
-  if (element) {
-    element.classList.remove("hidden");
-  }
-}
-
 function showLatestVersion(latestVersion) {
   if (typeof latestVersion === "string") {
-    setTextContent("latest_version", latestVersion);
+    setTextContent(getElement("latest_version"), latestVersion);
   } else {
-    setTextContent("latest_version", "UNKNOWN");
+    setTextContent(getElement("latest_version"), "UNKNOWN");
   }
 }
 
 function startEventListeners() {
   // Open settings page
-  const settingsButton = document.getElementById("open_settings_page");
+  const settingsButton = getElement("open_settings_page");
   if (settingsButton) {
     settingsButton.addEventListener("click", openSettingsPage);
   }
   // Refresh result
-  const imageButton = document.getElementById("status_image");
+  const imageButton = getElement("status_image");
   if (imageButton) {
     imageButton.addEventListener("click", async () => {
       await refreshResult(false);
@@ -152,15 +137,14 @@ function startEventListeners() {
           "browser_action event listener received runCheckerRefresh message:",
           message,
         );
-      configureInfoDetails();
+      configureInfoDetails(getElement("info_details"));
       updatePage(message.result);
     }
     return true;
   });
 }
 
-function showTooltip(selector) {
-  const element = document.querySelector(selector);
+function showTooltip(element) {
   if (element) {
     // show tooltip
     element.classList.add("show-tooltip");
@@ -175,9 +159,9 @@ async function updatePage(response) {
   const useCache = response.useCache;
   if (!useCache) {
     // Temporary status
-    hideElement("error_status");
-    showElement("loading_spinner");
-    changeImage("img");
+    hideElement(getElement("error_status"));
+    showElement(getElement("loading_spinner"));
+    changeImage(getElement("status_image"), "img");
     showLatestVersion("UNKNOWN");
   }
 
@@ -186,10 +170,10 @@ async function updatePage(response) {
   const latestVersion = response.latestVersion;
   const lastChecked = response.lastChecked;
   const errorCause = response.errorCause;
-  const infoDetails = document.getElementById("info_details");
+  const infoDetails = getElement("info_details");
 
   if (isRunning) {
-    showElement("loading_spinner");
+    showElement(getElement("loading_spinner"));
   }
 
   if (DEV_MODE)
@@ -212,45 +196,40 @@ async function updatePage(response) {
   if (typeof lastChecked === "number") {
     const dateChecked = new Date(lastChecked).toLocaleString();
     const relativeDateChecked = calculateRelativeTime(lastChecked);
-    setTextContent("checked_tooltip", dateChecked);
+    setTextContent(getElement("checked_tooltip"), dateChecked);
     setTextContent(
-      "last_checked",
+      getElement("last_checked"),
       `${browser.i18n.getMessage("lastChecked")} ${relativeDateChecked}`,
     );
-    showTooltip("#img_tooltip.tooltip_text");
+    showTooltip(getElement("img_tooltip"));
   }
 
   if (isLatest === true) {
-    hideElement("loading_spinner");
-    changeImage("ok");
+    hideElement(getElement("loading_spinner"));
+    changeImage(getElement("status_image"), "ok");
   } else if (isLatest !== true && errorCause && isRunning !== true) {
-    hideElement("loading_spinner");
-    changeImage("error");
-    showElement("error_status");
+    hideElement(getElement("loading_spinner"));
+    changeImage(getElement("status_image"), "error");
+    showElement(getElement("error_status"));
     showLatestVersion("ERROR");
     if (errorCause === "unsupported")
       setTextContent(
-        "error_status",
+        getElement("error_status"),
         browser.i18n.getMessage("unsupportedBrowser"),
       );
-    if (errorCause === "timedout")
-      setTextContent(
-        "error_status",
-        browser.i18n.getMessage("notificationContentErrTimedOut"),
-      );
   } else if (isLatest === null) {
-    hideElement("loading_spinner");
-    changeImage("error");
-    showElement("error_status");
+    hideElement(getElement("loading_spinner"));
+    changeImage(getElement("status_image"), "error");
+    showElement(getElement("error_status"));
     showLatestVersion("ERROR");
   } else if (isLatest === false) {
-    hideElement("loading_spinner");
-    changeImage("warn");
+    hideElement(getElement("loading_spinner"));
+    changeImage(getElement("status_image"), "warn");
 
     // Open details when update detected
     if (infoDetails) infoDetails.open = true;
   } else {
-    changeImage("unknown");
+    changeImage(getElement("status_image"), "unknown");
     showLatestVersion("UNKNOWN");
   }
 }

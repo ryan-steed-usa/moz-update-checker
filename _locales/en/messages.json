@@ -46,10 +46,6 @@
       "newver": { "content": "$3" }
     }
   },
-  "notificationContentErrTimedOut": {
-    "message": "Connection timed out.",
-    "description": "Timeout notification message"
-  },
   "notificationContentErr": {
     "message": "Error checking update!",
     "description": "Error notification message"

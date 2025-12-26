@@ -7,7 +7,7 @@
   </head>
   <body>
     <div>
-      <p id="managed_options">
+      <p id="managed_options" class="hidden">
         <b i18nKey="managedOptionsWarning"
           >Settings are enforced by an administrator.</b
         >
@@ -51,6 +51,13 @@
             </td>
             <td class="option-right">
               <select id="alarm_schedule">
+                <option
+                  id="option1Minute"
+                  class="hidden"
+                  value="1"
+                  i18nKey="option1Minute">
+                  1 Minutes
+                </option>
                 <option value="240" i18nKey="option4Hours">4 Hours</option>
                 <option value="480" i18nKey="option8Hours">8 Hours</option>
                 <option value="720" i18nKey="option12Hours" selected>

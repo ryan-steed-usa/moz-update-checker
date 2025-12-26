@@ -8,6 +8,7 @@ const ELEMENT_IDS = {
   ALARM_SCHEDULE: "alarm_schedule",
   SUBMIT_BUTTON: "submit_button",
   MANAGED_OPTIONS: "managed_options",
+  OPTION_1MINUTE: "option1Minute",
 };
 
 const STORAGE_KEYS = {
@@ -37,10 +38,6 @@ function disableElement(element) {
 
 function enableElement(element) {
   if (element) element.disabled = false;
-}
-
-function hideElement(element) {
-  if (element) element.style.display = "none";
 }
 
 async function loadManagedSettings() {
@@ -81,6 +78,14 @@ async function restoreSettings() {
     } else {
       // Read sync settings
       hideElement(getElement(ELEMENT_IDS.MANAGED_OPTIONS));
+
+      // Debug option
+      if (DEV_MODE) {
+        console.debug(
+          `options restoreSettings(): enabling debug option: ${ELEMENT_IDS.OPTION_1MINUTE}`,
+        );
+        showElement(getElement(ELEMENT_IDS.OPTION_1MINUTE));
+      }
 
       const syncSettings = await loadSettings();
       await applySettings(syncSettings);
@@ -150,10 +155,6 @@ async function settingsOnChange() {
   }
 }
 
-function showElement(element) {
-  if (element) element.style.display = "block";
-}
-
 async function storeSettings(settings) {
   try {
     await browser.storage.sync.set(settings);
@@ -165,9 +166,9 @@ async function storeSettings(settings) {
 }
 
 // Main events
-document.addEventListener("DOMContentLoaded", restoreSettings);
-
 document.addEventListener("DOMContentLoaded", () => {
+  restoreSettings();
+
   const form = getElement(ELEMENT_IDS.FORM);
   const alertType = getElement(ELEMENT_IDS.ALERT_TYPE);
   const alarmSchedule = getElement(ELEMENT_IDS.ALARM_SCHEDULE);

@@ -130,11 +130,17 @@ async function openBrowserStatusTab() {
 }
 
 // Run the update check
-async function runChecker(useCache = false, scheduled = true) {
+async function runChecker(alarmInfo, useCache = false, scheduled = true) {
   if (DEV_MODE)
-    console.debug(
-      `background_script runChecker(): checking for updates, useCache: ${useCache}`,
-    );
+    if (alarmInfo) {
+      console.debug(
+        `background_script runChecker(): AlarmInfo: name: ${alarmInfo.name}, periodInMinutes: ${alarmInfo.periodInMinutes}, scheduledTime: ${alarmInfo.scheduledTime}`,
+        new Date(alarmInfo.scheduledTime),
+      );
+    }
+  console.debug(
+    `background_script runChecker(): useCache: ${useCache}, scheduled: ${scheduled}`,
+  );
 
   // Set unknown status
   if (!useCache) setBrowserStatus("unknown");
@@ -336,7 +342,11 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
 
         // Run checker function
-        const result = await runChecker(message.use_cache === true, false);
+        const result = await runChecker(
+          undefined,
+          message.use_cache === true,
+          false,
+        );
 
         // Send response
         await sendRunCheckResponse(
