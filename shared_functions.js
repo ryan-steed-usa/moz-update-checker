@@ -16,12 +16,14 @@ let DEV_MODE = false;
 })();
 
 // Constant variables
-const ALARM_DEFAULT_MINUTES = 720;
-const ALARM_MINIMUM_MINUTES = DEV_MODE ? 1 : 240;
+const ALARM_DEFAULT_MINUTES = 480; // 8 hours
+const ALARM_MINIMUM_MINUTES = DEV_MODE ? 1 : 240; // 4 hour minimum unless dev mode
+const ALARM_NAME = "moz-update-checker";
 const MOZ_UPDATE_CHECK_APIS = {
   Firefox: "https://product-details.mozilla.org/1.0/firefox_versions.json",
   LibreWolf: "https://gitlab.com/api/v4/projects/44042130/releases.json",
-  IceCat: "https://gitweb.git.savannah.gnu.org/gitweb/?p=gnuzilla.git;a=atom",
+  IceCat:
+    "https://api.github.com/repos/ryan-steed-usa/gnu-icecat-mirror/releases/latest",
 };
 
 // Firefox support is implied
@@ -36,13 +38,10 @@ const ICON_PATHS = {
 
 // Constant functions
 const alarmScheduler = {
-  /*
-   * Updates or creates a recurring alarm to poll for updates
-   */
+  scheduledTime: null,
+  // Updates or creates a recurring alarm to poll for updates
   update: async function () {
     try {
-      const ALARM_NAME = "moz-update-checker";
-
       // Fetch stored schedule value
       const response = await browser.storage.sync.get("alarm_schedule");
 
@@ -72,10 +71,7 @@ const alarmScheduler = {
       }
 
       // Check if the alarm already exists with correct settings
-      const existingAlarms = await browser.alarms.getAll();
-      const existingAlarm = existingAlarms.find(
-        (alarm) => alarm.name === ALARM_NAME,
-      );
+      const existingAlarm = await browser.alarms.get(ALARM_NAME);
 
       if (existingAlarm && existingAlarm.periodInMinutes === alarmMinutes) {
         if (DEV_MODE)
@@ -88,11 +84,15 @@ const alarmScheduler = {
       await browser.alarms.clear(ALARM_NAME);
 
       if (alarmMinutes !== 0) {
+        browser.alarms.create(ALARM_NAME, { periodInMinutes: alarmMinutes });
+        const scheduledTime = await browser.alarms
+          .get(ALARM_NAME)
+          .then((alarm) => alarm.scheduledTime);
         if (DEV_MODE)
           console.debug(
-            `alarmScheduler(): creating alarm '${ALARM_NAME}' with period: ${alarmMinutes} minutes.`,
+            `alarmScheduler(): created alarm '${ALARM_NAME}' with period: ${alarmMinutes} minutes, next run ${scheduledTime}`,
+            new Date(scheduledTime),
           );
-        browser.alarms.create(ALARM_NAME, { periodInMinutes: alarmMinutes });
       }
     } catch (error) {
       console.error("alarmScheduler(): error updating alarm schedule:", error);
@@ -191,13 +191,13 @@ const updateChecker = {
   latestVersion: null,
 
   // Compares two semantic version strings with optional release suffix
-  compareVersions: function (browserName, latest) {
+  compareVersions: function (browserVersion, latestVersion) {
     // Validate input
     if (
-      typeof browserName !== "string" ||
-      browserName === "" ||
-      typeof latest !== "string" ||
-      latest === ""
+      typeof browserVersion !== "string" ||
+      browserVersion === "" ||
+      typeof latestVersion !== "string" ||
+      latestVersion === ""
     ) {
       if (DEV_MODE)
         console.debug(
@@ -207,13 +207,15 @@ const updateChecker = {
     }
 
     // Chomp
-    browserName = browserName.trim();
-    latest = latest.trim();
+    browserVersion = browserVersion.trim();
+    latestVersion = latestVersion.trim();
 
     // Split into base version and suffix
     const parsePart = (v) => {
       const parts = v.split("-");
-      const base = parts[0];
+      const base = parts[0].startsWith("v")
+        ? parts[0].replace("v", "")
+        : parts[0];
       const suffix = parts.length > 1 ? parts.slice(1).join("-") : null;
 
       // Split base into numbers
@@ -225,16 +227,16 @@ const updateChecker = {
       return { numbers, suffix };
     };
 
-    const { numbers: bNums, suffix: bSuffix } = parsePart(browserName);
-    const { numbers: lNums, suffix: lSuffix } = parsePart(latest);
+    const { numbers: bNums, suffix: bSuffix } = parsePart(browserVersion);
+    const { numbers: lNums, suffix: lSuffix } = parsePart(latestVersion);
 
     if (DEV_MODE)
       console.debug(
-        `updateChecker.compareVersions(): browserName: ${browserName}, base: ${bNums}, suffix: ${bSuffix}`,
+        `updateChecker.compareVersions(): browserVersion: ${browserVersion}, base: ${bNums}, suffix: ${bSuffix}`,
       );
     if (DEV_MODE)
       console.debug(
-        `updateChecker.compareVersions(): latest: ${latest}, base: ${lNums}, suffix: ${lSuffix}`,
+        `updateChecker.compareVersions(): latestVersion: ${latestVersion}, base: ${lNums}, suffix: ${lSuffix}`,
       );
 
     // Pad zeros
@@ -254,6 +256,7 @@ const updateChecker = {
     }
 
     // Compare suffix
+    if (lSuffix !== null && lSuffix.startsWith("gnu")) return 1; // IceCat
     if (bSuffix === null) return -1;
     if (lSuffix === null) return 1;
     const bSuffixNum = parseInt(bSuffix, 10);
@@ -275,15 +278,15 @@ const updateChecker = {
   },
 
   // Attempt to detect Firefox release
-  detectFirefoxRelease: function (browserName, latestObject) {
+  detectFirefoxRelease: function (browserVersion, latestObject) {
     // Helper function to strip esr string
     const stripESR = (v) => v?.split("esr")[0];
 
     // Validate input
-    if (typeof browserName !== "string" || browserName === "") {
+    if (typeof browserVersion !== "string" || browserVersion === "") {
       if (DEV_MODE)
         console.debug(
-          "updateChecker.detectFirefoxRelease(): browserName version input must be non-empty string",
+          "updateChecker.detectFirefoxRelease(): browserVersion  input must be non-empty string",
         );
       return null;
     }
@@ -304,9 +307,9 @@ const updateChecker = {
     const esr115Version = stripESR(latestObject["FIREFOX_ESR115"]);
 
     // Compare browser version with LATEST and both ESR versions
-    const cmpLatest = this.compareVersions(browserName, latestVersion);
-    const cmpESR = this.compareVersions(browserName, esrVersion);
-    const cmpESR115 = this.compareVersions(browserName, esr115Version);
+    const cmpLatest = this.compareVersions(browserVersion, latestVersion);
+    const cmpESR = this.compareVersions(browserVersion, esrVersion);
+    const cmpESR115 = this.compareVersions(browserVersion, esr115Version);
 
     if (cmpLatest <= 0 && cmpESR > 0) {
       if (DEV_MODE)
@@ -392,10 +395,7 @@ const updateChecker = {
           continue;
         }
 
-        const responseData =
-          browserName === "IceCat"
-            ? await response.text()
-            : await response.json();
+        const responseData = await response.json();
 
         // Save to storage cache
         await browser.storage.local.set({
@@ -507,7 +507,7 @@ const updateChecker = {
             this.latestVersion = latestResponse[0]?.name;
             break;
           case "IceCat":
-            this.latestVersion = this.parseIceCatVersion(latestResponse);
+            this.latestVersion = latestResponse?.tag_name;
             break;
         }
       }
@@ -590,62 +590,5 @@ const updateChecker = {
     }
 
     return false;
-  },
-
-  // Parse git log for latest IceCat release
-  parseIceCatVersion: function (xmlText) {
-    if (typeof xmlText !== "string" || xmlText === "") {
-      if (DEV_MODE)
-        console.debug(
-          "updateChecker.parseIceCatVersion(): xmlText input must be non-empty string",
-        );
-      return null;
-    }
-    const splitBySpace = (s) => s?.split(" ")[2] || "";
-    const stripSuffix = (s) => s?.split("-")[0] || s;
-
-    // Simple XML parsing
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(xmlText, "text/xml");
-
-    const entries = xmlDoc.getElementsByTagName("entry");
-    const versions = [];
-
-    // Read last 10 commit titles
-    for (let i = 0; i < Math.min(entries.length, 10); i++) {
-      const entry = entries[i];
-      const title = entry.getElementsByTagName("title")[0]?.textContent || "";
-      const updated =
-        entry.getElementsByTagName("updated")[0]?.textContent || "";
-
-      // Update commits seem to adhere to format of: "Update to 140.5.0-2."
-      if (title.includes("Update to")) {
-        // Extract version string
-        const version = splitBySpace(title);
-        if (version.includes(".")) {
-          versions.push({
-            version: stripSuffix(version),
-            updated: new Date(updated),
-          });
-        }
-      }
-    }
-
-    if (DEV_MODE)
-      console.debug("updateChecker.parseIceCatVersion(): versions:", versions);
-
-    if (versions.length === 0) {
-      if (DEV_MODE)
-        console.debug(
-          "updateChecker.parseIceCatVersion(): error parsing IceCat git atom feed",
-        );
-      return null;
-    }
-
-    const mostRecent = versions.reduce(
-      (latest, current) => (current.updated > latest.date ? current : latest),
-      versions[0],
-    );
-    return mostRecent.version;
   },
 };

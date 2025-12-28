@@ -13,16 +13,8 @@
       }
     }
   },
-  "version": "1.0.7",
-  "permissions": [
-    "alarms",
-    "menus",
-    "notifications",
-    "storage",
-    "https://product-details.mozilla.org/1.0/firefox_versions.json",
-    "https://gitlab.com/api/v4/projects/44042130/releases.json",
-    "https://gitweb.git.savannah.gnu.org/gitweb/?p=gnuzilla.git;a=atom"
-  ],
+  "version": "1.0.8",
+  "permissions": ["alarms", "menus", "notifications", "storage"],
   "icons": {
     "16": "images/status-unknown.svg",
     "24": "images/status-unknown.svg",

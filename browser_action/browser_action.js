@@ -58,12 +58,15 @@ async function init() {
 }
 
 function openSettingsPage() {
-  browser.runtime.openOptionsPage().catch((error) => {
-    console.error(
-      "browser_action openSettingsPage(): failed to open settings page:",
-      error,
-    );
-  });
+  browser.runtime
+    .openOptionsPage()
+    .then(window.close())
+    .catch((error) => {
+      console.error(
+        "browser_action openSettingsPage(): failed to open settings page:",
+        error,
+      );
+    });
 }
 
 async function refreshResult(useCache = false) {
@@ -95,7 +98,7 @@ async function showBrowserInfo(latestVersion) {
     setTextContent(getElement("browser_version"), version);
 
     if (SUPPORTED_BROWSERS.includes(name)) {
-      showElement(name);
+      showElement(getElement(name));
     }
     if (isESR) {
       showElement(getElement("ESR"));

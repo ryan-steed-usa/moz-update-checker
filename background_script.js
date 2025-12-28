@@ -131,13 +131,37 @@ async function openBrowserStatusTab() {
 
 // Run the update check
 async function runChecker(alarmInfo, useCache = false, scheduled = true) {
-  if (DEV_MODE)
+  if (DEV_MODE) {
     if (alarmInfo) {
       console.debug(
         `background_script runChecker(): AlarmInfo: name: ${alarmInfo.name}, periodInMinutes: ${alarmInfo.periodInMinutes}, scheduledTime: ${alarmInfo.scheduledTime}`,
         new Date(alarmInfo.scheduledTime),
       );
     }
+  }
+
+  // Compensate for missed alarms, i.e. due to suspend/sleep states
+  const alarmScheduledTime = await browser.alarms
+    .get(ALARM_NAME)
+    .then((alarm) => alarm.scheduledTime)
+    .catch(() => null);
+  const now = Date.now();
+  if (alarmScheduledTime !== null && useCache) {
+    if (DEV_MODE)
+      console.debug(
+        `background_script runChecker(): alarmScheduledTime: ${alarmScheduledTime}, now: ${now}`,
+        new Date(alarmScheduledTime),
+        new Date(now),
+      );
+    if (alarmScheduledTime <= now) {
+      if (DEV_MODE)
+        console.debug(
+          "background_script runChecker(): alarm missed, forcing run",
+        );
+      useCache = false;
+    }
+  }
+
   console.debug(
     `background_script runChecker(): useCache: ${useCache}, scheduled: ${scheduled}`,
   );
