@@ -20,7 +20,6 @@ body {
 div {
   margin: 4%;
   display: grid;
-  place-items: left;
 }
 
 #managed_options {

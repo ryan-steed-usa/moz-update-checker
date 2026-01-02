@@ -38,9 +38,8 @@ const ICON_PATHS = {
 
 // Constant functions
 const alarmScheduler = {
-  scheduledTime: null,
   // Updates or creates a recurring alarm to poll for updates
-  update: async function () {
+  update: async function (refresh = false) {
     try {
       // Fetch stored schedule value
       const response = await browser.storage.sync.get("alarm_schedule");
@@ -73,7 +72,11 @@ const alarmScheduler = {
       // Check if the alarm already exists with correct settings
       const existingAlarm = await browser.alarms.get(ALARM_NAME);
 
-      if (existingAlarm && existingAlarm.periodInMinutes === alarmMinutes) {
+      if (
+        existingAlarm &&
+        existingAlarm.periodInMinutes === alarmMinutes &&
+        !refresh
+      ) {
         if (DEV_MODE)
           console.debug("alarmScheduler(): schedule already exists, skipping.");
         return;
@@ -90,7 +93,7 @@ const alarmScheduler = {
           .then((alarm) => alarm.scheduledTime);
         if (DEV_MODE)
           console.debug(
-            `alarmScheduler(): created alarm '${ALARM_NAME}' with period: ${alarmMinutes} minutes, next run ${scheduledTime}`,
+            `alarmScheduler(): created alarm '${ALARM_NAME}', refresh: ${refresh}, with period: ${alarmMinutes} minutes, next run ${scheduledTime}`,
             new Date(scheduledTime),
           );
       }

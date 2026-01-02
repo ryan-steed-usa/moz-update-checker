@@ -71,23 +71,13 @@ async function init(status) {
 
     // Local storage permits manual toggle
     const key = "dev_mode";
-    if (status?.temporary) {
+    const result = await browser.storage.local.get(key);
+    if (typeof result[key]?.enabled !== "boolean") {
       await browser.storage.local.set({
         [key]: {
-          enabled: status.temporary,
+          enabled: status?.temporary ?? false,
         },
       });
-    } else {
-      try {
-        const result = await browser.storage.local.get(key);
-        typeof result[key]?.enabled === "boolean";
-      } catch {
-        await browser.storage.local.set({
-          [key]: {
-            enabled: false,
-          },
-        });
-      }
     }
 
     closeBrowserStatusTab();
@@ -141,40 +131,55 @@ async function runChecker(alarmInfo, useCache = false, scheduled = true) {
   }
 
   // Compensate for missed alarms, i.e. due to suspend/sleep states
-  const alarmScheduledTime = await browser.alarms
-    .get(ALARM_NAME)
-    .then((alarm) => alarm.scheduledTime)
-    .catch(() => null);
-  const now = Date.now();
-  if (alarmScheduledTime !== null && useCache) {
-    if (DEV_MODE)
-      console.debug(
-        `background_script runChecker(): alarmScheduledTime: ${alarmScheduledTime}, now: ${now}`,
-        new Date(alarmScheduledTime),
-        new Date(now),
-      );
-    if (alarmScheduledTime <= now) {
+  let lastChecked = updateChecker.lastChecked;
+  if (useCache) {
+    const [alarmScheduledTime, periodInSeconds] = await browser.alarms
+      .get(ALARM_NAME)
+      .then((alarm) => [alarm.scheduledTime, alarm.periodInMinutes * 60])
+      .catch(() => [null, null]);
+    const now = Date.now();
+    if (
+      alarmScheduledTime !== null &&
+      periodInSeconds !== null &&
+      lastChecked !== null
+    ) {
       if (DEV_MODE)
         console.debug(
+          `background_script runChecker(): alarmScheduledTime: ${alarmScheduledTime}, periodInSeconds: ${periodInSeconds}, lastChecked ${lastChecked}, now: ${now}`,
+          new Date(alarmScheduledTime),
+          new Date(lastChecked),
+          new Date(now),
+        );
+      if (
+        alarmScheduledTime <= now &&
+        now > lastChecked &&
+        now >= lastChecked + periodInSeconds
+      ) {
+        console.warn(
           "background_script runChecker(): alarm missed, forcing run",
         );
-      useCache = false;
+        useCache = false;
+      }
     }
   }
 
-  console.debug(
-    `background_script runChecker(): useCache: ${useCache}, scheduled: ${scheduled}`,
-  );
+  if (DEV_MODE)
+    console.debug(
+      `background_script runChecker(): useCache: ${useCache}, scheduled: ${scheduled}`,
+    );
 
   // Set unknown status
-  if (!useCache) setBrowserStatus("unknown");
+  if (!useCache) {
+    setBrowserStatus("unknown");
+    if (!scheduled) await alarmScheduler.update(true);
+  }
 
   const isLatest = await updateChecker.isLatest(useCache);
   const isRunning = await updateChecker.isRunning();
   const latestVersion = updateChecker.latestVersion;
   const resultError = updateChecker.error;
   const resultCause = updateChecker.error?.cause;
-  let lastChecked = updateChecker.lastChecked;
+  lastChecked = updateChecker.lastChecked;
 
   if (isLatest === true) {
     setBrowserStatus("ok");
