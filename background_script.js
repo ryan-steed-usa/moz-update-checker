@@ -35,15 +35,29 @@ async function init(status) {
     const updatesNeeded = {};
     let hasInvalidValues = false;
 
+    const unsupportedBrowser =
+      await browser.storage.local.get("is_unsupported");
+    if (DEV_MODE) {
+      if (unsupportedBrowser)
+        console.debug(
+          `background_script init(): unsupportedBrowser: ${unsupportedBrowser.is_unsupported}`,
+        );
+    }
+
     // Validate settings
     for (const [key, defaultValue] of Object.entries(defaultSettings)) {
       const currentValue = storedSettings[key];
 
-      const isValid = (() => {
+      const isValid = (async () => {
         switch (key) {
           case "alert_type":
             return ["both", "disabled", "tab", "notif"].includes(currentValue);
           case "alarm_schedule":
+            // Reset default if previously disabled due to unsupported status
+            if (unsupportedBrowser?.is_unsupported === true) {
+              await browser.storage.local.remove("is_unsupported");
+              return false;
+            }
             return (
               typeof currentValue === "string" &&
               /^\d+$/.test(currentValue) &&
@@ -55,7 +69,7 @@ async function init(status) {
         }
       })();
 
-      if (!isValid) {
+      if (!(await isValid)) {
         updatesNeeded[key] = defaultValue;
         hasInvalidValues = true;
       }
@@ -122,12 +136,11 @@ async function openBrowserStatusTab() {
 // Run the update check
 async function runChecker(alarmInfo, useCache = false, scheduled = true) {
   if (DEV_MODE) {
-    if (alarmInfo) {
+    if (alarmInfo)
       console.debug(
         `background_script runChecker(): AlarmInfo: name: ${alarmInfo.name}, periodInMinutes: ${alarmInfo.periodInMinutes}, scheduledTime: ${alarmInfo.scheduledTime}`,
         new Date(alarmInfo.scheduledTime),
       );
-    }
   }
 
   // Compensate for missed alarms, i.e. due to suspend/sleep states
@@ -138,11 +151,7 @@ async function runChecker(alarmInfo, useCache = false, scheduled = true) {
       .then((alarm) => [alarm.scheduledTime, alarm.periodInMinutes * 60])
       .catch(() => [null, null]);
     const now = Date.now();
-    if (
-      alarmScheduledTime !== null &&
-      periodInSeconds !== null &&
-      lastChecked !== null
-    ) {
+    if (periodInSeconds !== null && lastChecked !== null) {
       if (DEV_MODE)
         console.debug(
           `background_script runChecker(): alarmScheduledTime: ${alarmScheduledTime}, periodInSeconds: ${periodInSeconds}, lastChecked ${lastChecked}, now: ${now}`,
@@ -150,11 +159,7 @@ async function runChecker(alarmInfo, useCache = false, scheduled = true) {
           new Date(lastChecked),
           new Date(now),
         );
-      if (
-        alarmScheduledTime <= now &&
-        now > lastChecked &&
-        now >= lastChecked + periodInSeconds
-      ) {
+      if (alarmScheduledTime <= now && now >= lastChecked + periodInSeconds) {
         console.warn(
           "background_script runChecker(): alarm missed, forcing run",
         );

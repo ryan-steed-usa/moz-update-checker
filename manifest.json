@@ -13,7 +13,7 @@
       }
     }
   },
-  "version": "1.0.9",
+  "version": "1.0.10",
   "permissions": ["alarms", "menus", "notifications", "storage"],
   "icons": {
     "16": "images/status-unknown.svg",

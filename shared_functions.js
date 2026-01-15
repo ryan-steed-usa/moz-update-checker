@@ -21,7 +21,8 @@ const ALARM_MINIMUM_MINUTES = DEV_MODE ? 1 : 240; // 4 hour minimum unless dev m
 const ALARM_NAME = "moz-update-checker";
 const MOZ_UPDATE_CHECK_APIS = {
   Firefox: "https://product-details.mozilla.org/1.0/firefox_versions.json",
-  LibreWolf: "https://gitlab.com/api/v4/projects/44042130/releases.json",
+  LibreWolf:
+    "https://codeberg.org/api/v1/repos/librewolf/bsys6/releases?limit=1",
   IceCat:
     "https://api.github.com/repos/ryan-steed-usa/gnu-icecat-mirror/releases/latest",
 };
@@ -281,7 +282,7 @@ const updateChecker = {
   },
 
   // Attempt to detect Firefox release
-  detectFirefoxRelease: function (browserVersion, latestObject) {
+  detectFirefoxRelease: async function (browserVersion, latestObject) {
     // Helper function to strip esr string
     const stripESR = (v) => v?.split("esr")[0];
 
@@ -333,6 +334,7 @@ const updateChecker = {
         );
       return latestObject["FIREFOX_ESR115"];
     } else {
+      await browser.storage.local.set({ ["is_unsupported"]: true });
       throw new Error(
         "updateChecker.detectFirefoxRelease(): cannot detect supported Firefox version",
         { cause: "unsupported" },
@@ -457,6 +459,19 @@ const updateChecker = {
       this.browserName = name;
       this.browserVersion = version;
 
+      // Compensate for new LibreWolf extension "privacy feature"
+      // pref: librewolf.getBrowserInfo.setToFirefoxDefaults
+      if (
+        this.browserName === "Firefox" &&
+        this.browserVersion.split("-").length === 2
+      ) {
+        if (DEV_MODE)
+          console.debug(
+            "updateChecker.isLatest(): detected Firefox browserName with single dash in version string, presuming LibreWolf instead",
+          );
+        this.browserName = "LibreWolf";
+      }
+
       // Check if running
       if (running) return undefined;
 
@@ -464,10 +479,12 @@ const updateChecker = {
       const url = MOZ_UPDATE_CHECK_APIS[this.browserName]
         ? MOZ_UPDATE_CHECK_APIS[this.browserName]
         : "unsupported";
-      if (url === "unsupported")
+      if (url === "unsupported") {
+        await browser.storage.local.set({ ["is_unsupported"]: true });
         throw new Error(`Unsupported browser: ${this.browserName}`, {
           cause: url,
         });
+      }
 
       if (DEV_MODE)
         console.debug(
@@ -501,13 +518,13 @@ const updateChecker = {
         this.lastChecked = now;
         switch (this.browserName) {
           case "Firefox":
-            this.latestVersion = this.detectFirefoxRelease(
+            this.latestVersion = await this.detectFirefoxRelease(
               this.browserVersion,
               latestResponse,
             );
             break;
           case "LibreWolf":
-            this.latestVersion = latestResponse[0]?.name;
+            this.latestVersion = latestResponse[0]?.tag_name;
             break;
           case "IceCat":
             this.latestVersion = latestResponse?.tag_name;
