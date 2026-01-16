@@ -91,14 +91,26 @@ function setTextContent(element, text) {
   }
 }
 
-async function showBrowserInfo(latestVersion) {
+async function showBrowserInfo(browserName, browserVersion, latestVersion) {
   try {
     const { name, version } = await browser.runtime.getBrowserInfo();
     const isESR = latestVersion?.includes("esr");
-    setTextContent(getElement("browser_version"), version);
 
-    if (SUPPORTED_BROWSERS.includes(name)) {
-      showElement(getElement(name));
+    // Allow override via runChecker for LibreWolf
+    if (browserName === null) {
+      browserName = name;
+    } else {
+      setTextContent(
+        getElement("browser_version_header"),
+        browser.i18n.getMessage("browserVersion", browserName),
+      );
+    }
+    if (browserVersion === null) browserVersion = version;
+
+    setTextContent(getElement("browser_version"), browserVersion);
+
+    if (SUPPORTED_BROWSERS.includes(browserName)) {
+      showElement(getElement(browserName));
     }
     if (isESR) {
       showElement(getElement("ESR"));
@@ -170,6 +182,8 @@ async function updatePage(response) {
 
   const isLatest = response.isLatest;
   const isRunning = response.isRunning;
+  const browserName = response.browserName;
+  const browserVersion = response.browserVersion;
   const latestVersion = response.latestVersion;
   const lastChecked = response.lastChecked;
   const errorCause = response.errorCause;
@@ -191,7 +205,7 @@ async function updatePage(response) {
     );
 
   // Show browser information
-  showBrowserInfo(latestVersion);
+  showBrowserInfo(browserName, browserVersion, latestVersion);
 
   // Show version information
   showLatestVersion(latestVersion);

@@ -181,6 +181,8 @@ async function runChecker(alarmInfo, useCache = false, scheduled = true) {
 
   const isLatest = await updateChecker.isLatest(useCache);
   const isRunning = await updateChecker.isRunning();
+  const browserName = updateChecker.browserName;
+  const browserVersion = updateChecker.browserVersion;
   const latestVersion = updateChecker.latestVersion;
   const resultError = updateChecker.error;
   const resultCause = updateChecker.error?.cause;
@@ -204,6 +206,8 @@ async function runChecker(alarmInfo, useCache = false, scheduled = true) {
     useCache: useCache,
     isLatest: isLatest,
     isRunning: isRunning,
+    browserName: browserName,
+    browserVersion: browserVersion,
     lastChecked: lastChecked,
     latestVersion: latestVersion,
     error: resultError,
@@ -341,6 +345,8 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         useCache: result.useCache,
         isLatest: result.isLatest,
         isRunning: result.isRunning,
+        browserName: result.browserName,
+        browserVersion: result.browserVersion,
         lastChecked: result.lastChecked,
         latestVersion: result.latestVersion,
         errorCause: result.errorCause,
@@ -388,6 +394,8 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
             useCache: result.useCache,
             isLatest: result.isLatest,
             isRunning: result.isRunning,
+            browserName: result.browserName,
+            browserVersion: result.browserVersion,
             lastChecked: result.lastChecked,
             latestVersion: result.latestVersion,
             errorCause: result.errorCause,
@@ -401,6 +409,8 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
             useCache: false,
             isLatest: null,
             isRunning: false,
+            browserName: null,
+            browserVersion: null,
             lastChecked: null,
             latestVersion: null,
             error: error,
