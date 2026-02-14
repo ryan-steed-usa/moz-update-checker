@@ -21,10 +21,17 @@ const ALARM_MINIMUM_MINUTES = DEV_MODE ? 1 : 240; // 4 hour minimum unless dev m
 const ALARM_NAME = "moz-update-checker";
 const MOZ_UPDATE_CHECK_APIS = {
   Firefox: "https://product-details.mozilla.org/1.0/firefox_versions.json",
+  FirefoxPortableApps:
+    "https://sourceforge.net/projects/portableapps/rss?path=/Mozilla%20Firefox%2C%20Portable%20Ed.",
   LibreWolf:
     "https://codeberg.org/api/v1/repos/librewolf/bsys6/releases?limit=1",
+  LibreWolfPortableApps:
+    "https://sourceforge.net/projects/portableapps/rss?path=/LibreWolf%20Portable",
   IceCat:
     "https://api.github.com/repos/ryan-steed-usa/gnu-icecat-mirror/releases/latest",
+};
+const PERMISSION_PORTABLE_APPS = {
+  origins: ["https://sourceforge.net/projects/portableapps/rss*"],
 };
 
 // Firefox support is implied
@@ -124,8 +131,7 @@ const i18nTranslator = async () => {
   const elements = document.querySelectorAll(
     "[i18nKey],[i18nTitleKey],[i18nBrowserKey],[i18nVersionKey]",
   );
-  const { name } = await browser.runtime.getBrowserInfo();
-  const browserName = name;
+  const { browserName } = await browser.runtime.getBrowserInfo();
   const version = await browser.runtime.getManifest().version;
 
   // Loop and translate all matching elements
@@ -346,6 +352,7 @@ const updateChecker = {
   // Uses local storage for cross-context persistence
   fetchLatestVersion: async function (
     browserName,
+    portableapps,
     url,
     timeoutMs = 30000,
     maxRetries = 2,
@@ -400,7 +407,9 @@ const updateChecker = {
           continue;
         }
 
-        const responseData = await response.json();
+        const responseData = portableapps
+          ? await response.text()
+          : await response.json();
 
         // Save to storage cache
         await browser.storage.local.set({
@@ -458,6 +467,8 @@ const updateChecker = {
       const { name, version } = await browser.runtime.getBrowserInfo();
       this.browserName = name;
       this.browserVersion = version;
+      const response = await browser.storage.sync.get("enable_portableapps");
+      const portableapps = response?.enable_portableapps;
 
       // Compensate for new LibreWolf extension "privacy feature"
       // pref: librewolf.getBrowserInfo.setToFirefoxDefaults
@@ -475,20 +486,39 @@ const updateChecker = {
       // Check if running
       if (running) return undefined;
 
+      // Handle permission error
+      const portableappsPermission = await browser.permissions.contains(
+        PERMISSION_PORTABLE_APPS,
+      );
+      if (portableapps && !portableappsPermission) {
+        throw new Error(
+          "Permission required for PortableApps, check settings",
+          {
+            cause: "portableapps_permission",
+          },
+        );
+      }
+
       // Handle browser url
-      const url = MOZ_UPDATE_CHECK_APIS[this.browserName]
-        ? MOZ_UPDATE_CHECK_APIS[this.browserName]
+      const urlBrowser = portableapps
+        ? `${this.browserName}PortableApps`
+        : this.browserName;
+      const url = MOZ_UPDATE_CHECK_APIS[urlBrowser]
+        ? MOZ_UPDATE_CHECK_APIS[urlBrowser]
         : "unsupported";
       if (url === "unsupported") {
         await browser.storage.local.set({ ["is_unsupported"]: true });
-        throw new Error(`Unsupported browser: ${this.browserName}`, {
-          cause: url,
-        });
+        throw new Error(
+          `Unsupported browser: ${urlBrowser} (${this.browserName})`,
+          {
+            cause: url,
+          },
+        );
       }
 
       if (DEV_MODE)
         console.debug(
-          `updateChecker.isLatest(): detected browser: ${this.browserName} url: ${url}, useCache: ${useCache}`,
+          `updateChecker.isLatest(): detected browser: ${this.browserName}, urlBrowser: ${urlBrowser}, url: ${url}, portableapps: ${portableapps}, useCache: ${useCache}`,
         );
       if (DEV_MODE && useCache && stateEntry)
         console.debug(
@@ -498,7 +528,7 @@ const updateChecker = {
       // Fetch latest version
       const latestResponse = useCache
         ? null
-        : await this.fetchLatestVersion(this.browserName, url);
+        : await this.fetchLatestVersion(this.browserName, portableapps, url);
 
       if (!latestResponse && !useCache) {
         this.isRunning(false);
@@ -518,13 +548,17 @@ const updateChecker = {
         this.lastChecked = now;
         switch (this.browserName) {
           case "Firefox":
-            this.latestVersion = await this.detectFirefoxRelease(
-              this.browserVersion,
-              latestResponse,
-            );
+            this.latestVersion = portableapps
+              ? this.parsePortableAppsRSSVersion(latestResponse)
+              : await this.detectFirefoxRelease(
+                  this.browserVersion,
+                  latestResponse,
+                );
             break;
           case "LibreWolf":
-            this.latestVersion = latestResponse[0]?.tag_name;
+            this.latestVersion = portableapps
+              ? this.parsePortableAppsRSSVersion(latestResponse)
+              : latestResponse[0]?.tag_name;
             break;
           case "IceCat":
             this.latestVersion = latestResponse?.tag_name;
@@ -610,5 +644,64 @@ const updateChecker = {
     }
 
     return false;
+  },
+
+  // Parse PortableApps RSS feeds
+  parsePortableAppsRSSVersion: function (xmlText) {
+    if (typeof xmlText !== "string" || xmlText === "") {
+      if (DEV_MODE)
+        console.debug(
+          "updateChecker.parsePortableAppsRSSVersion(): xmlText input must be non-empty string",
+        );
+      return null;
+    }
+    const splitByUnderscore = (s) => s?.split("_")[1] || "";
+
+    // Simple XML parsing
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+
+    const items = xmlDoc.getElementsByTagName("item");
+    const versions = [];
+
+    // Read last 10 commit titles
+    for (let i = 0; i < Math.min(items.length, 10); i++) {
+      const item = items[i];
+      const title = item.getElementsByTagName("title")[0]?.textContent || "";
+      const pubDate =
+        item.getElementsByTagName("pubDate")[0]?.textContent || "";
+
+      // Titles currently use format of: "<browser>Portable_<version>_<language>.paf.exe"
+      if (title.includes(".paf.exe")) {
+        // Extract version string
+        const version = splitByUnderscore(title);
+        if (version.includes(".")) {
+          versions.push({
+            version: version,
+            pubDate: new Date(pubDate),
+          });
+        }
+      }
+    }
+
+    if (DEV_MODE)
+      console.debug(
+        "updateChecker.parsePortableAppsRSSVersion(): versions:",
+        versions,
+      );
+
+    if (versions.length === 0) {
+      if (DEV_MODE)
+        console.debug(
+          "updateChecker.parsePortableAppsRSSVersion(): error parsing PortableApps RSS feed",
+        );
+      return null;
+    }
+
+    const mostRecent = versions.reduce(
+      (latest, current) => (current.pubDate > latest.date ? current : latest),
+      versions[0],
+    );
+    return mostRecent.version;
   },
 };

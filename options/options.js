@@ -9,11 +9,13 @@ const ELEMENT_IDS = {
   SUBMIT_BUTTON: "submit_button",
   MANAGED_OPTIONS: "managed_options",
   OPTION_1MINUTE: "option1Minute",
+  PORTABLE_APPS: "toggle_portableapps",
 };
 
 const STORAGE_KEYS = {
   ALERT_TYPE: "alert_type",
   ALARM_SCHEDULE: "alarm_schedule",
+  PORTABLE_APPS: "enable_portableapps",
 };
 
 // Functions
@@ -22,6 +24,7 @@ const getElement = (id) => document.getElementById(id);
 async function applySettings(settings) {
   const alertTypeElement = getElement(ELEMENT_IDS.ALERT_TYPE);
   const alarmScheduleElement = getElement(ELEMENT_IDS.ALARM_SCHEDULE);
+  const togglePortableApps = getElement(ELEMENT_IDS.PORTABLE_APPS);
 
   if (alertTypeElement) {
     alertTypeElement.value = settings[STORAGE_KEYS.ALERT_TYPE] || "";
@@ -29,6 +32,10 @@ async function applySettings(settings) {
 
   if (alarmScheduleElement) {
     alarmScheduleElement.value = settings[STORAGE_KEYS.ALARM_SCHEDULE] || "";
+  }
+
+  if (togglePortableApps) {
+    togglePortableApps.checked = settings[STORAGE_KEYS.PORTABLE_APPS] || false;
   }
 }
 
@@ -75,9 +82,21 @@ async function restoreSettings() {
       // Prevent edit
       disableElement(getElement(ELEMENT_IDS.ALERT_TYPE));
       disableElement(getElement(ELEMENT_IDS.ALARM_SCHEDULE));
+      disableElement(getElement(ELEMENT_IDS.PORTABLE_APPS));
     } else {
       // Read sync settings
       hideElement(getElement(ELEMENT_IDS.MANAGED_OPTIONS));
+
+      // IceCat isn't offered by PortableApps.com
+      const { name } = await browser.runtime.getBrowserInfo();
+      if (name !== "IceCat") {
+        if (DEV_MODE) {
+          console.debug(
+            "options restoreSettings(): showing PortableApps option",
+          );
+        }
+        showElement(getElement("portableapps_row"));
+      }
 
       // Debug option
       if (DEV_MODE) {
@@ -93,6 +112,7 @@ async function restoreSettings() {
       // Enable edit
       enableElement(getElement(ELEMENT_IDS.ALERT_TYPE));
       enableElement(getElement(ELEMENT_IDS.ALARM_SCHEDULE));
+      enableElement(getElement(ELEMENT_IDS.PORTABLE_APPS));
     }
 
     // Update buttons
@@ -102,13 +122,52 @@ async function restoreSettings() {
   }
 }
 
+async function requestPortableAppsPermission() {
+  // Optionally handle PortableApps SourceForge RSS permission
+  const togglePortableAppsElement = getElement(ELEMENT_IDS.PORTABLE_APPS);
+  let result = togglePortableAppsElement?.checked;
+  if (togglePortableAppsElement.checked) {
+    const response = await browser.permissions.request(
+      PERMISSION_PORTABLE_APPS,
+    );
+    if (response) {
+      if (DEV_MODE) {
+        console.debug(
+          "options requestPortableAppsPermission(): granted PortableApps permission",
+        );
+      }
+    } else {
+      if (DEV_MODE) {
+        console.debug(
+          "options requestPortableAppsPermission(): user refused PortableApps permission",
+        );
+      }
+      togglePortableAppsElement.checked = false;
+      result = false;
+    }
+  } else {
+    await browser.permissions.remove(PERMISSION_PORTABLE_APPS);
+    if (DEV_MODE) {
+      console.debug(
+        "options requestPortableAppsPermission(): revoked PortableApps permission",
+      );
+    }
+  }
+  return result;
+}
+
 async function saveSettings(e) {
   e.preventDefault();
 
   const alertType = getElement(ELEMENT_IDS.ALERT_TYPE)?.value;
   const alarmSchedule = getElement(ELEMENT_IDS.ALARM_SCHEDULE)?.value;
+  const togglePortableApps = await requestPortableAppsPermission();
 
-  if (alertType === undefined || alarmSchedule === undefined) {
+  if (
+    alertType === undefined ||
+    alarmSchedule === undefined ||
+    typeof togglePortableApps !== "boolean"
+  ) {
     console.error("options saveSettings(): failed to get form values");
     return;
   }
@@ -116,6 +175,7 @@ async function saveSettings(e) {
   const settings = {
     [STORAGE_KEYS.ALERT_TYPE]: alertType,
     [STORAGE_KEYS.ALARM_SCHEDULE]: alarmSchedule,
+    [STORAGE_KEYS.PORTABLE_APPS]: togglePortableApps,
   };
 
   const success = await storeSettings(settings);
@@ -130,9 +190,15 @@ async function settingsOnChange() {
     const currentSettings = await loadSettings();
     const alertTypeElement = getElement(ELEMENT_IDS.ALERT_TYPE);
     const alarmScheduleElement = getElement(ELEMENT_IDS.ALARM_SCHEDULE);
+    const togglePortableAppsElement = getElement(ELEMENT_IDS.PORTABLE_APPS);
     const submitButton = getElement(ELEMENT_IDS.SUBMIT_BUTTON);
 
-    if (!alertTypeElement || !alarmScheduleElement || !submitButton) {
+    if (
+      !alertTypeElement ||
+      !alarmScheduleElement ||
+      !togglePortableAppsElement ||
+      !submitButton
+    ) {
       return;
     }
 
@@ -140,7 +206,9 @@ async function settingsOnChange() {
       alertTypeElement.value !==
         (currentSettings[STORAGE_KEYS.ALERT_TYPE] || "") ||
       alarmScheduleElement.value !==
-        (currentSettings[STORAGE_KEYS.ALARM_SCHEDULE] || "");
+        (currentSettings[STORAGE_KEYS.ALARM_SCHEDULE] || "") ||
+      togglePortableAppsElement.checked !==
+        (currentSettings[STORAGE_KEYS.PORTABLE_APPS] || false);
 
     if (hasChanges) {
       enableElement(submitButton);
@@ -172,6 +240,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const form = getElement(ELEMENT_IDS.FORM);
   const alertType = getElement(ELEMENT_IDS.ALERT_TYPE);
   const alarmSchedule = getElement(ELEMENT_IDS.ALARM_SCHEDULE);
+  const togglePortableApps = getElement(ELEMENT_IDS.PORTABLE_APPS);
 
   if (form) {
     form.addEventListener("submit", saveSettings);
@@ -184,5 +253,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (alarmSchedule) {
     alarmSchedule.addEventListener("change", settingsOnChange);
+  }
+
+  if (togglePortableApps) {
+    togglePortableApps.addEventListener("change", settingsOnChange);
   }
 });

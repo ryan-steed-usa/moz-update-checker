@@ -19,6 +19,7 @@ async function init(status) {
   const defaultSettings = {
     alert_type: "both",
     alarm_schedule: String(ALARM_DEFAULT_MINUTES),
+    enable_portableapps: false,
   };
 
   const clearStates = ["is_latest", "is_running"];
@@ -64,6 +65,8 @@ async function init(status) {
               (parseInt(currentValue, 10) === 0 ||
                 parseInt(currentValue, 10) >= ALARM_MINIMUM_MINUTES)
             );
+          case "enable_portableapps":
+            return typeof currentValue === "boolean";
           default:
             return false;
         }

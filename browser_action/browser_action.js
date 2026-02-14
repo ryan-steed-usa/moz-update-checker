@@ -229,11 +229,17 @@ async function updatePage(response) {
     changeImage(getElement("status_image"), "error");
     showElement(getElement("error_status"));
     showLatestVersion("ERROR");
-    if (errorCause === "unsupported")
+    if (errorCause === "unsupported") {
       setTextContent(
         getElement("error_status"),
         browser.i18n.getMessage("unsupportedBrowser"),
       );
+    } else if (errorCause === "portableapps_permission") {
+      setTextContent(
+        getElement("error_status"),
+        browser.i18n.getMessage("portableappsPermission"),
+      );
+    }
   } else if (isLatest === null) {
     hideElement(getElement("loading_spinner"));
     changeImage(getElement("status_image"), "error");

@@ -90,6 +90,10 @@
     "message": "Save Settings",
     "description": "Option Save Settings button text"
   },
+  "optionPortableApps": {
+    "message": "Checks for PortableApps.com releases using SourceForge RSS feed.",
+    "description": "Option PortableApps.com title text"
+  },
   "updateInfoIceCatHome": {
     "message": "IceCat Home",
     "description": "Update Info IceCat Home link text"
@@ -196,7 +200,11 @@
   },
   "unsupportedBrowser": {
     "message": "Unsupported browser!",
-    "description": "Header text to display unsupported error"
+    "description": "Text to display unsupported error"
+  },
+  "portableappsPermission": {
+    "message": "Permission required for PortableApps, check settings",
+    "description": "Text to display PortableApps permission error"
   },
 
   "__WET_LOCALE__": { "message": "en" }
