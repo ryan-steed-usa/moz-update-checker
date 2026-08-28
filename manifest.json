@@ -13,10 +13,11 @@
       }
     }
   },
-  "version": "1.1.0",
+  "version": "1.1.1",
   "permissions": ["alarms", "menus", "notifications", "storage"],
   "optional_permissions": [
-    "https://sourceforge.net/projects/portableapps/rss*"
+    "https://sourceforge.net/projects/portableapps/rss*",
+    "https://librewolf.dev/api/v1/repos/librewolf/bsys6/releases?limit=1"
   ],
   "icons": {
     "16": "images/status-unknown.svg",

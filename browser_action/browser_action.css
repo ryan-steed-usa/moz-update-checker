@@ -105,13 +105,23 @@ td {
   background-color: hsla(0, 0%, 50%, 0.5);
 }
 
+#status_image {
+  animation: pulse 4.25s ease-in-out infinite;
+}
+
 #error_status {
   color: red;
   background-color: hsla(62, 100%, 55%, 0.5);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  max-width: 28rem;
+  text-align: center;
 }
 
 #loading_spinner {
-  animation: spin 1.75s linear infinite;
+  animation:
+    spin 1.75s linear infinite,
+    pulse 1.75s ease-in-out infinite;
   border: 6px solid rgba(255, 255, 255, 0.3);
   border-top: 6px solid whitesmoke;
   border-radius: 50%;
@@ -131,6 +141,16 @@ td {
   }
 }
 
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
 .tooltip {
   display: grid;
   position: relative;
@@ -147,13 +167,14 @@ td {
   padding: 0.25em;
   position: absolute;
   opacity: 0;
-  transition: opacity 0.8s;
+  transition: opacity 2s;
 }
 
 #img_tooltip {
   width: 100%;
   right: -100%;
   top: -45%;
+  transition: opacity 6s;
 }
 
 #checked_tooltip {
@@ -175,4 +196,18 @@ td {
 .show-tooltip {
   opacity: 1;
   visibility: visible;
+}
+
+#grant_librewolf_permission {
+  border-style: double;
+  border-width: medium;
+  border-radius: 0.3em;
+  color: whitesmoke;
+  background-color: hsla(0, 0%, 50%, 0.3);
+  mix-blend-mode: difference;
+}
+
+#grant_librewolf_permission:hover {
+  border-radius: 0.3em;
+  background-color: hsla(0, 0%, 50%, 0.5);
 }

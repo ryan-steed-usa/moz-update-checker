@@ -24,7 +24,7 @@ const MOZ_UPDATE_CHECK_APIS = {
   FirefoxPortableApps:
     "https://sourceforge.net/projects/portableapps/rss?path=/Mozilla%20Firefox%2C%20Portable%20Ed.",
   LibreWolf:
-    "https://codeberg.org/api/v1/repos/librewolf/bsys6/releases?limit=1",
+    "https://librewolf.dev/api/v1/repos/librewolf/bsys6/releases?limit=1",
   LibreWolfPortableApps:
     "https://sourceforge.net/projects/portableapps/rss?path=/LibreWolf%20Portable",
   IceCat:
@@ -32,6 +32,11 @@ const MOZ_UPDATE_CHECK_APIS = {
 };
 const PERMISSION_PORTABLE_APPS = {
   origins: ["https://sourceforge.net/projects/portableapps/rss*"],
+};
+const PERMISSION_LIBREWOLF_DEV = {
+  origins: [
+    "https://librewolf.dev/api/v1/repos/librewolf/bsys6/releases?limit=1",
+  ],
 };
 
 // Firefox support is implied
@@ -453,6 +458,8 @@ const updateChecker = {
 
   // Main method to check if the browser is up-to-date
   isLatest: async function (useCache = false) {
+    this.error = null;
+
     // Local storage
     const key = "is_latest";
     const result = await browser.storage.local.get(key);
@@ -486,17 +493,31 @@ const updateChecker = {
       // Check if running
       if (running) return undefined;
 
-      // Handle permission error
-      const portableappsPermission = await browser.permissions.contains(
-        PERMISSION_PORTABLE_APPS,
-      );
-      if (portableapps && !portableappsPermission) {
-        throw new Error(
-          "Permission required for PortableApps, check settings",
-          {
-            cause: "portableapps_permission",
-          },
+      // Handle permissions
+      // PortableApps
+      if (portableapps) {
+        const requiredPermission = await browser.permissions.contains(
+          PERMISSION_PORTABLE_APPS,
         );
+        if (!requiredPermission) {
+          throw new Error(
+            "Permission required for PortableApps version check",
+            {
+              cause: "portableapps_permission",
+            },
+          );
+        }
+      }
+      // LibreWolf
+      if (this.browserName === "LibreWolf" && !portableapps) {
+        const requiredPermission = await browser.permissions.contains(
+          PERMISSION_LIBREWOLF_DEV,
+        );
+        if (!requiredPermission) {
+          throw new Error("Permission required for LibreWolf version check", {
+            cause: "librewolf_permission",
+          });
+        }
       }
 
       // Handle browser url
@@ -549,7 +570,10 @@ const updateChecker = {
         switch (this.browserName) {
           case "Firefox":
             this.latestVersion = portableapps
-              ? this.parsePortableAppsRSSVersion(latestResponse)
+              ? this.parsePortableAppsRSSVersion(
+                  latestResponse,
+                  this.browserVersion.includes("esr"),
+                )
               : await this.detectFirefoxRelease(
                   this.browserVersion,
                   latestResponse,
@@ -647,7 +671,7 @@ const updateChecker = {
   },
 
   // Parse PortableApps RSS feeds
-  parsePortableAppsRSSVersion: function (xmlText) {
+  parsePortableAppsRSSVersion: function (xmlText, esr = false) {
     if (typeof xmlText !== "string" || xmlText === "") {
       if (DEV_MODE)
         console.debug(
@@ -656,6 +680,7 @@ const updateChecker = {
       return null;
     }
     const splitByUnderscore = (s) => s?.split("_")[1] || "";
+    const isEsrTitle = (t) => t.includes("ESR");
 
     // Simple XML parsing
     const parser = new DOMParser();
@@ -664,15 +689,16 @@ const updateChecker = {
     const items = xmlDoc.getElementsByTagName("item");
     const versions = [];
 
-    // Read last 10 commit titles
-    for (let i = 0; i < Math.min(items.length, 10); i++) {
+    // Read last 10 matching commit titles
+    for (let i = 0; i < items.length && versions.length < 10; i++) {
       const item = items[i];
       const title = item.getElementsByTagName("title")[0]?.textContent || "";
       const pubDate =
         item.getElementsByTagName("pubDate")[0]?.textContent || "";
 
       // Titles currently use format of: "<browser>Portable_<version>_<language>.paf.exe"
-      if (title.includes(".paf.exe")) {
+      // ESR titles use format of: "<browser>PortableESR_<version>_<language>.paf.exe"
+      if (title.includes(".paf.exe") && isEsrTitle(title) === esr) {
         // Extract version string
         const version = splitByUnderscore(title);
         if (version.includes(".")) {

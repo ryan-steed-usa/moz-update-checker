@@ -52,8 +52,6 @@ async function init() {
     });
   }
 
-  showTooltip(getElement("img_tooltip"));
-
   await refreshResult(true);
 }
 
@@ -157,16 +155,18 @@ function startEventListeners() {
     }
     return true;
   });
-}
-
-function showTooltip(element) {
-  if (element) {
-    // show tooltip
-    element.classList.add("show-tooltip");
-    // close tooltip after 2 seconds automatically
-    setTimeout(() => {
-      element.classList.remove("show-tooltip");
-    }, 1000);
+  // Grant LibreWolf permission
+  const grantLibreWolfButton = getElement("grant_librewolf_permission");
+  if (grantLibreWolfButton) {
+    grantLibreWolfButton.addEventListener("click", async () => {
+      const granted = await browser.permissions.request(
+        PERMISSION_LIBREWOLF_DEV,
+      );
+      if (granted) {
+        hideElement(grantLibreWolfButton);
+        await refreshResult(false);
+      }
+    });
   }
 }
 
@@ -175,6 +175,7 @@ async function updatePage(response) {
   if (!useCache) {
     // Temporary status
     hideElement(getElement("error_status"));
+    hideElement(getElement("grant_librewolf_permission"));
     showElement(getElement("loading_spinner"));
     changeImage(getElement("status_image"), "img");
     showLatestVersion("UNKNOWN");
@@ -218,7 +219,6 @@ async function updatePage(response) {
       getElement("last_checked"),
       `${browser.i18n.getMessage("lastChecked")} ${relativeDateChecked}`,
     );
-    showTooltip(getElement("img_tooltip"));
   }
 
   if (isLatest === true) {
@@ -239,6 +239,12 @@ async function updatePage(response) {
         getElement("error_status"),
         browser.i18n.getMessage("portableappsPermission"),
       );
+    } else if (errorCause === "librewolf_permission") {
+      setTextContent(
+        getElement("error_status"),
+        browser.i18n.getMessage("librewolfPermission"),
+      );
+      showElement(getElement("grant_librewolf_permission"));
     }
   } else if (isLatest === null) {
     hideElement(getElement("loading_spinner"));

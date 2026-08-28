@@ -203,8 +203,16 @@
     "description": "Text to display unsupported error"
   },
   "portableappsPermission": {
-    "message": "Permission required for PortableApps, check settings",
+    "message": "Permission required for PortableApps version check",
     "description": "Text to display PortableApps permission error"
+  },
+  "librewolfPermission": {
+    "message": "Permission required for LibreWolf version check",
+    "description": "Text to display LibreWolf permission error"
+  },
+  "grantLibreWolfPermission": {
+    "message": "Grant access",
+    "description": "Text to display LibreWolf grant permission button"
   },
 
   "__WET_LOCALE__": { "message": "en" }
