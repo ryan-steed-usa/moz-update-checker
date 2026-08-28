@@ -567,12 +567,17 @@ const updateChecker = {
         this.lastChecked = stateEntry.timestamp;
       } else {
         this.lastChecked = now;
+        const portableappsResponse = await browser.storage.sync.get(
+          "portableapps_version",
+        );
+
         switch (this.browserName) {
           case "Firefox":
             this.latestVersion = portableapps
               ? this.parsePortableAppsRSSVersion(
                   latestResponse,
-                  this.browserVersion.includes("esr"),
+                  portableappsResponse?.portableapps_version?.includes("esr") ||
+                    false,
                 )
               : await this.detectFirefoxRelease(
                   this.browserVersion,
@@ -679,6 +684,11 @@ const updateChecker = {
         );
       return null;
     }
+    if (DEV_MODE)
+      console.debug(
+        `updateChecker.parsePortableAppsRSSVersion(): esr = ${esr}`,
+      );
+
     const splitByUnderscore = (s) => s?.split("_")[1] || "";
     const isEsrTitle = (t) => t.includes("ESR");
 

@@ -74,7 +74,6 @@
             <td>
               <label for="toggle_portableapps"
                 ><b
-                  i18nKey="optionPortableApps"
                   i18nTitleKey="optionPortableApps"
                   title="Checks for PortableApps.com releases using SourceForge RSS feed."
                   >PortableApps.com</b
@@ -83,6 +82,29 @@
             </td>
             <td class="option-right">
               <input type="checkbox" id="toggle_portableapps" />
+            </td>
+          </tr>
+          <tr id="portableapps_version_row" class="hidden">
+            <td>
+              <label for="portableapps_version_select"
+                ><b
+                  i18nKey="optionPortableAppsVersion"
+                  i18nTitleKey="optionPortableAppsVersionTitle"
+                  title="Select Firefox version: Latest or ESR."
+                  >PortableApps.com Firefox version</b
+                ></label
+              >
+            </td>
+            <td class="option-right">
+              <select id="portableapps_version_select">
+                <option
+                  value="latest"
+                  i18nKey="optionPortableAppsLatest"
+                  selected>
+                  Latest
+                </option>
+                <option value="esr" i18nKey="optionPortableAppsESR">ESR</option>
+              </select>
             </td>
           </tr>
           <tr>

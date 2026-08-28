@@ -94,6 +94,22 @@
     "message": "Checks for PortableApps.com releases using SourceForge RSS feed.",
     "description": "Option PortableApps.com title text"
   },
+  "optionPortableAppsVersion": {
+    "message": "PortableApps.com Firefox version",
+    "description": "Option PortableApps.com Firefox version text"
+  },
+  "optionPortableAppsVersionTitle": {
+    "message": "Select Firefox version: Latest or ESR.",
+    "description": "Option PortableApps.com Firefox version title text"
+  },
+  "optionPortableAppsLatest": {
+    "message": "Latest",
+    "description": "Option PortableApps.com Firefox version Latest text"
+  },
+  "optionPortableAppsESR": {
+    "message": "ESR",
+    "description": "Option PortableApps.com Firefox version ESR text"
+  },
   "updateInfoIceCatHome": {
     "message": "IceCat Home",
     "description": "Update Info IceCat Home link text"

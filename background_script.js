@@ -20,6 +20,7 @@ async function init(status) {
     alert_type: "both",
     alarm_schedule: String(ALARM_DEFAULT_MINUTES),
     enable_portableapps: false,
+    portableapps_version: "latest",
   };
 
   const clearStates = ["is_latest", "is_running"];
@@ -67,6 +68,8 @@ async function init(status) {
             );
           case "enable_portableapps":
             return typeof currentValue === "boolean";
+          case "portableapps_version":
+            return ["latest", "esr"].includes(currentValue);
           default:
             return false;
         }

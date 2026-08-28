@@ -10,12 +10,14 @@ const ELEMENT_IDS = {
   MANAGED_OPTIONS: "managed_options",
   OPTION_1MINUTE: "option1Minute",
   PORTABLE_APPS: "toggle_portableapps",
+  PORTABLE_APPS_VERSION: "portableapps_version_select",
 };
 
 const STORAGE_KEYS = {
   ALERT_TYPE: "alert_type",
   ALARM_SCHEDULE: "alarm_schedule",
   PORTABLE_APPS: "enable_portableapps",
+  PORTABLE_APPS_VERSION: "portableapps_version",
 };
 
 // Functions
@@ -25,6 +27,7 @@ async function applySettings(settings) {
   const alertTypeElement = getElement(ELEMENT_IDS.ALERT_TYPE);
   const alarmScheduleElement = getElement(ELEMENT_IDS.ALARM_SCHEDULE);
   const togglePortableApps = getElement(ELEMENT_IDS.PORTABLE_APPS);
+  const portableAppsVersion = getElement(ELEMENT_IDS.PORTABLE_APPS_VERSION);
 
   if (alertTypeElement) {
     alertTypeElement.value = settings[STORAGE_KEYS.ALERT_TYPE] || "";
@@ -36,6 +39,11 @@ async function applySettings(settings) {
 
   if (togglePortableApps) {
     togglePortableApps.checked = settings[STORAGE_KEYS.PORTABLE_APPS] || false;
+  }
+
+  if (portableAppsVersion) {
+    portableAppsVersion.value =
+      settings[STORAGE_KEYS.PORTABLE_APPS_VERSION] || "";
   }
 }
 
@@ -83,6 +91,7 @@ async function restoreSettings() {
       disableElement(getElement(ELEMENT_IDS.ALERT_TYPE));
       disableElement(getElement(ELEMENT_IDS.ALARM_SCHEDULE));
       disableElement(getElement(ELEMENT_IDS.PORTABLE_APPS));
+      disableElement(getElement(ELEMENT_IDS.PORTABLE_APPS_VERSION));
     } else {
       // Read sync settings
       hideElement(getElement(ELEMENT_IDS.MANAGED_OPTIONS));
@@ -96,6 +105,7 @@ async function restoreSettings() {
           );
         }
         showElement(getElement("portableapps_row"));
+        showElement(getElement("portableapps_version_row"));
       }
 
       // Debug option
@@ -113,6 +123,7 @@ async function restoreSettings() {
       enableElement(getElement(ELEMENT_IDS.ALERT_TYPE));
       enableElement(getElement(ELEMENT_IDS.ALARM_SCHEDULE));
       enableElement(getElement(ELEMENT_IDS.PORTABLE_APPS));
+      enableElement(getElement(ELEMENT_IDS.PORTABLE_APPS_VERSION));
     }
 
     // Update buttons
@@ -162,11 +173,15 @@ async function saveSettings(e) {
   const alertType = getElement(ELEMENT_IDS.ALERT_TYPE)?.value;
   const alarmSchedule = getElement(ELEMENT_IDS.ALARM_SCHEDULE)?.value;
   const togglePortableApps = await requestPortableAppsPermission();
+  const portableAppsVersion = getElement(
+    ELEMENT_IDS.PORTABLE_APPS_VERSION,
+  )?.value;
 
   if (
     alertType === undefined ||
     alarmSchedule === undefined ||
-    typeof togglePortableApps !== "boolean"
+    typeof togglePortableApps !== "boolean" ||
+    portableAppsVersion === undefined
   ) {
     console.error("options saveSettings(): failed to get form values");
     return;
@@ -176,6 +191,7 @@ async function saveSettings(e) {
     [STORAGE_KEYS.ALERT_TYPE]: alertType,
     [STORAGE_KEYS.ALARM_SCHEDULE]: alarmSchedule,
     [STORAGE_KEYS.PORTABLE_APPS]: togglePortableApps,
+    [STORAGE_KEYS.PORTABLE_APPS_VERSION]: portableAppsVersion,
   };
 
   const success = await storeSettings(settings);
@@ -191,12 +207,16 @@ async function settingsOnChange() {
     const alertTypeElement = getElement(ELEMENT_IDS.ALERT_TYPE);
     const alarmScheduleElement = getElement(ELEMENT_IDS.ALARM_SCHEDULE);
     const togglePortableAppsElement = getElement(ELEMENT_IDS.PORTABLE_APPS);
+    const portableAppsVersionElement = getElement(
+      ELEMENT_IDS.PORTABLE_APPS_VERSION,
+    );
     const submitButton = getElement(ELEMENT_IDS.SUBMIT_BUTTON);
 
     if (
       !alertTypeElement ||
       !alarmScheduleElement ||
       !togglePortableAppsElement ||
+      !portableAppsVersionElement ||
       !submitButton
     ) {
       return;
@@ -208,7 +228,9 @@ async function settingsOnChange() {
       alarmScheduleElement.value !==
         (currentSettings[STORAGE_KEYS.ALARM_SCHEDULE] || "") ||
       togglePortableAppsElement.checked !==
-        (currentSettings[STORAGE_KEYS.PORTABLE_APPS] || false);
+        (currentSettings[STORAGE_KEYS.PORTABLE_APPS] || false) ||
+      portableAppsVersionElement.value !==
+        (currentSettings[STORAGE_KEYS.PORTABLE_APPS_VERSION] || "");
 
     if (hasChanges) {
       enableElement(submitButton);
@@ -241,6 +263,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const alertType = getElement(ELEMENT_IDS.ALERT_TYPE);
   const alarmSchedule = getElement(ELEMENT_IDS.ALARM_SCHEDULE);
   const togglePortableApps = getElement(ELEMENT_IDS.PORTABLE_APPS);
+  const portableAppsVersion = getElement(ELEMENT_IDS.PORTABLE_APPS_VERSION);
 
   if (form) {
     form.addEventListener("submit", saveSettings);
@@ -257,5 +280,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (togglePortableApps) {
     togglePortableApps.addEventListener("change", settingsOnChange);
+  }
+
+  if (portableAppsVersion) {
+    portableAppsVersion.addEventListener("change", settingsOnChange);
   }
 });
