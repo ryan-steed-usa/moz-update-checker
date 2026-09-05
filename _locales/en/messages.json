@@ -122,9 +122,13 @@
     "message": "Librewolf Home",
     "description": "Update Info Librewolf Home link text"
   },
-  "updateInfoLibrewolfReleases": {
-    "message": "Librewolf Releases",
-    "description": "Update Info Librewolf Releases link text"
+  "updateInfoLibrewolfCodeReleases": {
+    "message": "Librewolf Code Releases",
+    "description": "Update Info Librewolf Code Releases link text"
+  },
+  "updateInfoLibrewolfBinaryReleases": {
+    "message": "Librewolf Binary Releases",
+    "description": "Update Info Librewolf Binary Releases link text"
   },
   "updateInfoESRAdvisories": {
     "message": "ESR Security Advisories",

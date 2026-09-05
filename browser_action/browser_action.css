@@ -48,9 +48,14 @@ td {
   position: relative;
 }
 
-#info_table {
+#info_table,
+#librewolf_home {
   font-size: 0.8em;
   max-width: 14rem;
+}
+
+#librewolf_home {
+  text-align: center;
 }
 
 .version_header {

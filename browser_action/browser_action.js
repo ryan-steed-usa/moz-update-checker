@@ -109,6 +109,9 @@ async function showBrowserInfo(browserName, browserVersion, latestVersion) {
 
     if (SUPPORTED_BROWSERS.includes(browserName)) {
       showElement(getElement(browserName));
+      if (browserName === "LibreWolf") {
+        showElement(getElement("librewolf_home"));
+      }
     }
     if (isESR) {
       showElement(getElement("ESR"));
