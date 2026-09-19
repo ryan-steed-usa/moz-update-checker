@@ -62,15 +62,23 @@ function enableElement(element) {
   if (element) element.disabled = false;
 }
 
-function isLibreWolf() {
+async function isLibreWolf() {
   // LibreWolf only offers a non-ESR branch
   const toggleLibreWolfElement = getElement(ELEMENT_IDS.FORCE_LIBREWOLF);
+  const { name } = await browser.runtime.getBrowserInfo();
   if (toggleLibreWolfElement?.checked) {
     if (DEV_MODE)
       console.debug(
-        "options restoreSettings(): LibreWolf manually identified, hiding PortableApps version option",
+        "options isLibreWolf(): LibreWolf manually identified, hiding PortableApps version option",
       );
     hideElement(getElement("portableapps_version_row"));
+  } else if (name === "Firefox") {
+    if (DEV_MODE) {
+      console.debug(
+        "options isLibreWolf(): Firefox detected, showing PortableApps option",
+      );
+    }
+    showElement(getElement("portableapps_version_row"));
   }
 }
 
@@ -232,7 +240,7 @@ async function restoreSettings() {
       enableElement(getElement(ELEMENT_IDS.PORTABLE_APPS));
       enableElement(getElement(ELEMENT_IDS.PORTABLE_APPS_VERSION));
 
-      isLibreWolf();
+      await isLibreWolf();
     }
 
     // Update buttons
@@ -351,7 +359,7 @@ async function settingsOnChange() {
       disableElement(submitButton);
     }
 
-    isLibreWolf();
+    await isLibreWolf();
   } catch (error) {
     console.error(
       "options settingsOnChange(): error in settingsOnChange:",
