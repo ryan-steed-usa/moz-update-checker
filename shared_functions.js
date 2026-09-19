@@ -204,9 +204,14 @@ const updateChecker = {
   error: null,
   lastChecked: null,
   latestVersion: null,
+  forcelibrewolf: null,
 
   // Compares two semantic version strings with optional release suffix
-  compareVersions: function (browserVersion, latestVersion) {
+  compareVersions: function (
+    browserVersion,
+    latestVersion,
+    forcelibrewolf = false,
+  ) {
     // Validate input
     if (
       typeof browserVersion !== "string" ||
@@ -245,14 +250,17 @@ const updateChecker = {
     const { numbers: bNums, suffix: bSuffix } = parsePart(browserVersion);
     const { numbers: lNums, suffix: lSuffix } = parsePart(latestVersion);
 
-    if (DEV_MODE)
+    if (DEV_MODE) {
       console.debug(
         `updateChecker.compareVersions(): browserVersion: ${browserVersion}, base: ${bNums}, suffix: ${bSuffix}`,
       );
-    if (DEV_MODE)
       console.debug(
         `updateChecker.compareVersions(): latestVersion: ${latestVersion}, base: ${lNums}, suffix: ${lSuffix}`,
       );
+      console.debug(
+        `updateChecker.compareVersions(): forcelibrewolf: ${forcelibrewolf}`,
+      );
+    }
 
     // Pad zeros
     const maxLength = Math.max(bNums.length, lNums.length);
@@ -271,19 +279,22 @@ const updateChecker = {
     }
 
     // Compare suffix
-    if (lSuffix !== null && lSuffix.startsWith("gnu")) return 1; // IceCat
-    if (bSuffix === null) return -1;
-    if (lSuffix === null) return 1;
-    const bSuffixNum = parseInt(bSuffix, 10);
-    const lSuffixNum = parseInt(lSuffix, 10);
+    if (!forcelibrewolf) {
+      if (lSuffix !== null && lSuffix.startsWith("gnu")) return 1; // IceCat
+      if (bSuffix === null) return -1;
+      if (lSuffix === null) return 1;
 
-    // Attempt to handle non-numeric suffix
-    if (isNaN(bSuffixNum) || isNaN(lSuffixNum)) {
-      return lSuffix.localeCompare(bSuffix);
+      const bSuffixNum = parseInt(bSuffix, 10);
+      const lSuffixNum = parseInt(lSuffix, 10);
+
+      // Attempt to handle non-numeric suffix
+      if (isNaN(bSuffixNum) || isNaN(lSuffixNum)) {
+        return lSuffix.localeCompare(bSuffix);
+      }
+
+      if (bSuffixNum > lSuffixNum) return 1;
+      if (bSuffixNum < lSuffixNum) return -1;
     }
-
-    if (bSuffixNum > lSuffixNum) return 1;
-    if (bSuffixNum < lSuffixNum) return -1;
 
     // Return values:
     // 0  = equal
@@ -474,8 +485,14 @@ const updateChecker = {
       const { name, version } = await browser.runtime.getBrowserInfo();
       this.browserName = name;
       this.browserVersion = version;
-      const response = await browser.storage.sync.get("enable_portableapps");
-      const portableapps = response?.enable_portableapps;
+      const portableapps_response = await browser.storage.sync.get(
+        "enable_portableapps",
+      );
+      const portableapps = portableapps_response?.enable_portableapps;
+      const forcelibrewolf_response =
+        await browser.storage.sync.get("force_librewolf");
+      const forcelibrewolf = forcelibrewolf_response?.force_librewolf;
+      this.forcelibrewolf = forcelibrewolf;
 
       // Compensate for new LibreWolf extension "privacy feature"
       // pref: librewolf.getBrowserInfo.setToFirefoxDefaults
@@ -487,6 +504,12 @@ const updateChecker = {
           console.debug(
             "updateChecker.isLatest(): detected Firefox browserName with single dash in version string, presuming LibreWolf instead",
           );
+        this.browserName = "LibreWolf";
+      }
+
+      if (forcelibrewolf) {
+        if (DEV_MODE)
+          console.debug("updateChecker.isLatest(): force-enabling LibreWolf");
         this.browserName = "LibreWolf";
       }
 
@@ -599,7 +622,11 @@ const updateChecker = {
       const comparison =
         useCache && stateEntry
           ? null
-          : this.compareVersions(this.browserVersion, this.latestVersion);
+          : this.compareVersions(
+              this.browserVersion,
+              this.latestVersion,
+              this.forcelibrewolf,
+            );
       const result =
         useCache && stateEntry
           ? stateEntry.result

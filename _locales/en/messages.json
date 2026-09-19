@@ -90,6 +90,10 @@
     "message": "Save Settings",
     "description": "Option Save Settings button text"
   },
+  "optionForceLibrewolf": {
+    "message": "Enables checks for LibreWolf releases from librewolf.dev.",
+    "description": "Option ForceLibrewolf title text"
+  },
   "optionPortableApps": {
     "message": "Checks for PortableApps.com releases using SourceForge RSS feed.",
     "description": "Option PortableApps.com title text"

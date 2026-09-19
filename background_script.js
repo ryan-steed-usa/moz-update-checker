@@ -20,6 +20,7 @@ async function init(status) {
     alert_type: "both",
     alarm_schedule: String(ALARM_DEFAULT_MINUTES),
     enable_portableapps: false,
+    force_librewolf: false,
     portableapps_version: "latest",
   };
 
@@ -67,6 +68,8 @@ async function init(status) {
                 parseInt(currentValue, 10) >= ALARM_MINIMUM_MINUTES)
             );
           case "enable_portableapps":
+            return typeof currentValue === "boolean";
+          case "force_librewolf":
             return typeof currentValue === "boolean";
           case "portableapps_version":
             return ["latest", "esr"].includes(currentValue);
@@ -229,6 +232,7 @@ async function runChecker(alarmInfo, useCache = false, scheduled = true) {
 async function sendNotification(result) {
   const { name, version } = await browser.runtime.getBrowserInfo();
   let settings = {};
+  let browserName = name;
 
   // Attempt to retrieve configuration from managed storage first (e.g., enterprise policy)
   try {
@@ -253,6 +257,11 @@ async function sendNotification(result) {
   }
 
   const alertType = settings?.alert_type;
+  const forceLibreWolf = settings?.force_librewolf;
+
+  if (forceLibreWolf) {
+    browserName = "LibreWolf";
+  }
 
   // Open a new tab
   if (alertType === "tab" || alertType === "both") {
@@ -263,7 +272,7 @@ async function sendNotification(result) {
   // Send desktop notification
   if (alertType === "notif" || alertType === "both") {
     let content = browser.i18n.getMessage("notificationContentUpdate", [
-      name,
+      browserName,
       version,
       result.latestVersion,
     ]);
