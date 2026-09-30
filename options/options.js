@@ -66,19 +66,37 @@ async function isLibreWolf() {
   // LibreWolf only offers a non-ESR branch
   const toggleLibreWolfElement = getElement(ELEMENT_IDS.FORCE_LIBREWOLF);
   const { name } = await browser.runtime.getBrowserInfo();
-  if (toggleLibreWolfElement?.checked) {
+  if (name === "LibreWolf") {
+    if (DEV_MODE)
+      console.debug(
+        "options isLibreWolf(): LibreWolf identified, disabling LibreWolf option and hiding PortableApps version option",
+      );
+    toggleLibreWolfElement.checked = false;
+    disableElement(getElement("toggle_librewolf"));
+    hideElement(getElement("librewolf_recommended_pref"));
+    showElement(getElement("librewolf_detected"));
+    hideElement(getElement("portableapps_version_row"));
+    await storeSettings({ [STORAGE_KEYS.FORCE_LIBREWOLF]: false });
+    return true;
+  } else if (toggleLibreWolfElement?.checked) {
     if (DEV_MODE)
       console.debug(
         "options isLibreWolf(): LibreWolf manually identified, hiding PortableApps version option",
       );
+    hideElement(getElement("librewolf_detected"));
+    showElement(getElement("librewolf_recommended_pref"));
     hideElement(getElement("portableapps_version_row"));
+    return null;
   } else if (name === "Firefox") {
     if (DEV_MODE) {
       console.debug(
         "options isLibreWolf(): Firefox detected, showing PortableApps option",
       );
     }
+    hideElement(getElement("librewolf_detected"));
+    showElement(getElement("librewolf_recommended_pref"));
     showElement(getElement("portableapps_version_row"));
+    return false;
   }
 }
 
@@ -219,6 +237,9 @@ async function restoreSettings() {
         showElement(getElement("librewolf_row"));
         showElement(getElement("portableapps_row"));
         showElement(getElement("portableapps_version_row"));
+      } else {
+        hideElement(getElement("librewolf_detected"));
+        hideElement(getElement("librewolf_recommended_pref"));
       }
 
       // Debug option

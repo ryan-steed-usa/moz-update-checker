@@ -25,7 +25,7 @@
                 ></label
               >
             </td>
-            <td class="option-left">
+            <td class="option-right">
               <select id="alert_type">
                 <option value="tab" i18nKey="optionTab">New Tab</option>
                 <option value="notif" i18nKey="optionNotif">
@@ -72,16 +72,22 @@
           </tr>
           <tr id="librewolf_row" class="hidden">
             <td>
-              <label for="toggle_librewolf"
+              <label for="toggle_librewolf" id="librewolf_label"
                 ><b
                   i18nTitleKey="optionForceLibrewolf"
-                  title="Enables checks for LibreWolf releases from librewolf.dev."
-                  >LibreWolf</b
+                  title="Force-enable checks for LibreWolf releases from librewolf.dev."
+                  >Force LibreWolf</b
                 ></label
               >
             </td>
             <td class="option-right">
               <input type="checkbox" id="toggle_librewolf" />
+            </td>
+          </tr>
+          <tr>
+            <td id="librewolf_option_info" colspan="2">
+              <span id="librewolf_recommended_pref" i18nKey="optionLibreWolfRecommendedPref" class="hidden">Disable pref <b>librewolf.getBrowserInfo.setToFirefoxDefaults</b> for full release detection.</span>
+              <span id="librewolf_detected" i18nKey="optionLibreWolfDetected" class=hidden">LibreWolf automatically detected.</span>
             </td>
           </tr>
           <tr id="portableapps_row" class="hidden">

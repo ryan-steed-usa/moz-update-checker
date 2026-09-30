@@ -330,12 +330,10 @@ const updateChecker = {
 
     const latestVersion = latestObject["LATEST_FIREFOX_VERSION"];
     const esrVersion = stripESR(latestObject["FIREFOX_ESR"]);
-    const esr115Version = stripESR(latestObject["FIREFOX_ESR115"]);
 
     // Compare browser version with LATEST and both ESR versions
     const cmpLatest = this.compareVersions(browserVersion, latestVersion);
     const cmpESR = this.compareVersions(browserVersion, esrVersion);
-    const cmpESR115 = this.compareVersions(browserVersion, esr115Version);
 
     if (cmpLatest <= 0 && cmpESR > 0) {
       if (DEV_MODE)
@@ -343,18 +341,12 @@ const updateChecker = {
           "updateChecker.detectFirefoxRelease(): Firefox LATEST detected",
         );
       return latestObject["LATEST_FIREFOX_VERSION"];
-    } else if (cmpESR <= 0 && cmpESR115 > 0) {
+    } else if (cmpESR <= 0) {
       if (DEV_MODE)
         console.debug(
           "updateChecker.detectFirefoxRelease(): Firefox ESR detected",
         );
       return latestObject["FIREFOX_ESR"];
-    } else if (cmpESR115 <= 0) {
-      if (DEV_MODE)
-        console.debug(
-          "updateChecker.detectFirefoxRelease(): Firefox ESR115 detected",
-        );
-      return latestObject["FIREFOX_ESR115"];
     } else {
       await browser.storage.local.set({ ["is_unsupported"]: true });
       throw new Error(

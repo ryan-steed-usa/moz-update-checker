@@ -4,6 +4,8 @@
 // Functions
 const getElement = (id) => document.getElementById(id);
 
+const isTab = () => browser.extension.getViews({ type: "tab" }).includes(window);
+
 function calculateRelativeTime(timestamp) {
   if (typeof timestamp === "number") {
     const now = Date.now();
@@ -247,7 +249,12 @@ async function updatePage(response) {
         getElement("error_status"),
         browser.i18n.getMessage("librewolfPermission"),
       );
-      showElement(getElement("grant_librewolf_permission"));
+      if (isTab()) {
+        showElement(getElement("grant_librewolf_permission"));
+      } else {
+        browser.runtime.sendMessage({ action: "openStatusTab" });
+        window.close();
+      }
     }
   } else if (isLatest === null) {
     hideElement(getElement("loading_spinner"));

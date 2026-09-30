@@ -348,7 +348,25 @@ browser.menus.onShown.addListener((info) => {
   updateMenuItem(id, browser.i18n.getMessage("menuOpenSettings"));
 });
 
+// Force a refresh when the LibreWolf permission is granted
+browser.permissions.onAdded.addListener(async (permissions) => {
+  const grantedLibreWolf = permissions.origins?.some((origin) =>
+    PERMISSION_LIBREWOLF_DEV.origins.includes(origin),
+  );
+  if (grantedLibreWolf) {
+    if (DEV_MODE)
+      console.debug(
+        "background_script permissions.onAdded: LibreWolf permission granted",
+      );
+    await runChecker(undefined, false, false);
+  }
+});
+
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === "openStatusTab") {
+    openBrowserStatusTab();
+    return false;
+  }
   if (message.action === "runChecker") {
     if (DEV_MODE)
       console.debug(

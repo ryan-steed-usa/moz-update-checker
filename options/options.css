@@ -50,3 +50,7 @@ select {
 .hidden {
   display: none;
 }
+
+#librewolf_option_info {
+  font-size: 0.8rem;
+}

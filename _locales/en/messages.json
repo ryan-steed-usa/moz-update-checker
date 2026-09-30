@@ -94,6 +94,14 @@
     "message": "Enables checks for LibreWolf releases from librewolf.dev.",
     "description": "Option ForceLibrewolf title text"
   },
+  "optionLibreWolfRecommendedPref": {
+    "message": "Disable pref <b>librewolf.getBrowserInfo.setToFirefoxDefaults</b> for full release detection.",
+    "description": "Option LibreWolf Recommended Pref text"
+  },
+  "optionLibreWolfDetected": {
+    "message": "LibreWolf automatically detected.",
+    "description": "Option LibreWolf automatically detected text"
+  },
   "optionPortableApps": {
     "message": "Checks for PortableApps.com releases using SourceForge RSS feed.",
     "description": "Option PortableApps.com title text"

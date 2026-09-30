@@ -80,7 +80,8 @@ td {
 }
 
 #small_image {
-  max-height: 24px !important;
+  max-height: 20px !important;
+  vertical-align: center;
 }
 
 .hidden {
@@ -88,11 +89,11 @@ td {
 }
 
 #open_settings_page {
-  text-align: left;
+  text-align: center;
 }
 
 #open_github_link {
-  text-align: right;
+  text-align: center;
 }
 
 #footer_table {
