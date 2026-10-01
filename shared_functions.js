@@ -198,6 +198,56 @@ const showElement = (element) => {
   }
 };
 
+const stripMarkdown = (markdown) => {
+  if (typeof markdown !== "string") return "";
+
+  const text = markdown
+    // Thanks to Qwen3.8-Flash-Next for these
+    // regular expressions
+
+    // Fenced code blocks
+    .replace(/```[\s\S]*?```/g, "")
+
+    // Inline code
+    .replace(/`([^`]+)`/g, "$1")
+
+    // Images, then links
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+
+    // Headings
+    .replace(/^#{1,6}\s+/gm, "")
+
+    // Bold / italic
+    .replace(/(\*\*|__)(.*?)\1/g, "$2")
+    .replace(/(\*|_)(.*?)\1/g, "$2")
+
+    // Strikethrough
+    .replace(/~~(.*?)~~/g, "$1")
+
+    // Blockquotes
+    .replace(/^\s*>\s?/gm, "")
+
+    // Lists
+    .replace(/^\s*[-*+]\s+/gm, "")
+    .replace(/^\s*\d+\.\s+/gm, "")
+
+    // Horizontal rules
+    .replace(/^\s*([-*_])\s*\1\s*\1[-*_\s]*$/gm, "")
+
+    // Table pipes
+    .replace(/\|/g, " ");
+
+  // Strip HTML tags and decode HTML entities
+  const parsed = new DOMParser().parseFromString(text, "text/html");
+  const decoded = parsed.documentElement?.textContent ?? text;
+
+  return decoded
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+};
+
 const updateChecker = {
   browserName: null,
   browserVersion: null,
@@ -205,6 +255,8 @@ const updateChecker = {
   lastChecked: null,
   latestVersion: null,
   forcelibrewolf: null,
+  releaseUrl: null,
+  changelog: null,
 
   // Compares two semantic version strings with optional release suffix
   compareVersions: function (
@@ -462,6 +514,8 @@ const updateChecker = {
   // Main method to check if the browser is up-to-date
   isLatest: async function (useCache = false) {
     this.error = null;
+    this.releaseUrl = null;
+    this.changelog = null;
 
     // Local storage
     const key = "is_latest";
@@ -580,6 +634,8 @@ const updateChecker = {
       if (useCache && typeof stateEntry?.latest === "string") {
         this.latestVersion = stateEntry.latest;
         this.lastChecked = stateEntry.timestamp;
+        this.releaseUrl = stateEntry.releaseUrl ?? null;
+        this.changelog = stateEntry.changelog ?? null;
       } else {
         this.lastChecked = now;
         const portableappsResponse = await browser.storage.sync.get(
@@ -603,9 +659,16 @@ const updateChecker = {
             this.latestVersion = portableapps
               ? this.parsePortableAppsRSSVersion(latestResponse)
               : latestResponse[0]?.tag_name;
+            if (!portableapps) {
+              this.releaseUrl = latestResponse?.[0]?.html_url ?? null;
+              this.changelog = latestResponse?.[0]?.body ?? null;
+            }
             break;
+
           case "IceCat":
             this.latestVersion = latestResponse?.tag_name;
+            this.releaseUrl = latestResponse?.html_url ?? null;
+            this.changelog = latestResponse?.body ?? null;
             break;
         }
       }
@@ -638,6 +701,8 @@ const updateChecker = {
             latest: this.latestVersion,
             result: result,
             timestamp: this.lastChecked,
+            releaseUrl: this.releaseUrl,
+            changelog: this.changelog,
           },
         });
       }

@@ -193,6 +193,8 @@ async function runChecker(alarmInfo, useCache = false, scheduled = true) {
   const browserName = updateChecker.browserName;
   const browserVersion = updateChecker.browserVersion;
   const latestVersion = updateChecker.latestVersion;
+  const releaseUrl = updateChecker.releaseUrl;
+  const changelog = updateChecker.changelog;
   const resultError = updateChecker.error;
   const resultCause = updateChecker.error?.cause;
   lastChecked = updateChecker.lastChecked;
@@ -219,6 +221,8 @@ async function runChecker(alarmInfo, useCache = false, scheduled = true) {
     browserVersion: browserVersion,
     lastChecked: lastChecked,
     latestVersion: latestVersion,
+    releaseUrl: releaseUrl,
+    changelog: changelog,
     error: resultError,
     errorCause: resultCause,
   };
@@ -381,6 +385,8 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         browserName: result.browserName,
         browserVersion: result.browserVersion,
         lastChecked: result.lastChecked,
+        releaseUrl: result.releaseUrl,
+        changelog: result.changelog,
         latestVersion: result.latestVersion,
         errorCause: result.errorCause,
       };
@@ -431,6 +437,8 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
             browserVersion: result.browserVersion,
             lastChecked: result.lastChecked,
             latestVersion: result.latestVersion,
+            releaseUrl: result.releaseUrl,
+            changelog: result.changelog,
             errorCause: result.errorCause,
           },
           sendResponse,
@@ -446,6 +454,8 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
             browserVersion: null,
             lastChecked: null,
             latestVersion: null,
+            releaseUrl: null,
+            changelog: null,
             error: error,
             errorCause: error.cause,
           },

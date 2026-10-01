@@ -4,7 +4,8 @@
 // Functions
 const getElement = (id) => document.getElementById(id);
 
-const isTab = () => browser.extension.getViews({ type: "tab" }).includes(window);
+const isTab = () =>
+  browser.extension.getViews({ type: "tab" }).includes(window);
 
 function calculateRelativeTime(timestamp) {
   if (typeof timestamp === "number") {
@@ -51,6 +52,8 @@ async function init() {
       isRunning: running.expires === "number" ? true : false,
       latestVersion: cached.is_latest.latest,
       lastChecked: cached.is_latest.timestamp,
+      releaseUrl: cached.is_latest.releaseUrl,
+      changelog: cached.is_latest.changelog,
     });
   }
 
@@ -126,12 +129,48 @@ async function showBrowserInfo(browserName, browserVersion, latestVersion) {
   }
 }
 
-function showLatestVersion(latestVersion) {
-  if (typeof latestVersion === "string") {
-    setTextContent(getElement("latest_version"), latestVersion);
-  } else {
-    setTextContent(getElement("latest_version"), "UNKNOWN");
+function showLatestVersion(browserName, latestVersion, releaseUrl, changelog) {
+  const element = getElement("latest_version");
+  if (!element) return;
+
+  const text = typeof latestVersion === "string" ? latestVersion : "UNKNOWN";
+
+  if (browserName === "Firefox") {
+    releaseUrl = `https://www.firefox.com/en-US/firefox/${latestVersion}/releasenotes/`;
   }
+
+  let href = null;
+
+  try {
+    const url = new URL(releaseUrl);
+    if (url.protocol === "https:" || url.protocol === "http:") {
+      href = url.href;
+    }
+  } catch {
+    if (DEV_MODE)
+      console.debug(
+        "browser_action showLatestVersion(): Invalid or missing release URL",
+      );
+  }
+
+  element.textContent = "";
+
+  if (!href) {
+    setTextContent(element, text);
+    return;
+  }
+
+  const link = document.createElement("a");
+  link.href = href;
+  link.textContent = text;
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+
+  if (typeof changelog === "string" && changelog !== "") {
+    link.title = stripMarkdown(changelog);
+  }
+
+  element.appendChild(link);
 }
 
 function startEventListeners() {
@@ -192,6 +231,8 @@ async function updatePage(response) {
   const browserVersion = response.browserVersion;
   const latestVersion = response.latestVersion;
   const lastChecked = response.lastChecked;
+  const releaseUrl = response.releaseUrl;
+  const changelog = response.changelog;
   const errorCause = response.errorCause;
   const infoDetails = getElement("info_details");
 
@@ -214,7 +255,7 @@ async function updatePage(response) {
   showBrowserInfo(browserName, browserVersion, latestVersion);
 
   // Show version information
-  showLatestVersion(latestVersion);
+  showLatestVersion(browserName, latestVersion, releaseUrl, changelog);
 
   if (typeof lastChecked === "number") {
     const dateChecked = new Date(lastChecked).toLocaleString();
