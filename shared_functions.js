@@ -654,6 +654,7 @@ const updateChecker = {
                   this.browserVersion,
                   latestResponse,
                 );
+            this.releaseUrl = `https://www.firefox.com/en-US/firefox/${this.latestVersion}/releasenotes/`;
             break;
           case "LibreWolf":
             this.latestVersion = portableapps

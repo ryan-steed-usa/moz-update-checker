@@ -135,10 +135,6 @@ function showLatestVersion(browserName, latestVersion, releaseUrl, changelog) {
 
   const text = typeof latestVersion === "string" ? latestVersion : "UNKNOWN";
 
-  if (browserName === "Firefox") {
-    releaseUrl = `https://www.firefox.com/en-US/firefox/${latestVersion}/releasenotes/`;
-  }
-
   let href = null;
 
   try {

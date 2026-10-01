@@ -13,7 +13,7 @@
       }
     }
   },
-  "version": "1.2.0",
+  "version": "1.2.1",
   "permissions": ["alarms", "menus", "notifications", "storage"],
   "optional_permissions": [
     "https://sourceforge.net/projects/portableapps/rss*",
