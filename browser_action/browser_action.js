@@ -49,7 +49,7 @@ async function init() {
     updatePage({
       useCache: true,
       isLatest: cached.is_latest.result,
-      isRunning: running.expires === "number" ? true : false,
+      isRunning: typeof running.expires === "number" ? true : false,
       latestVersion: cached.is_latest.latest,
       lastChecked: cached.is_latest.timestamp,
       releaseUrl: cached.is_latest.releaseUrl,

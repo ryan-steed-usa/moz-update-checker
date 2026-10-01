@@ -17,7 +17,7 @@
   "permissions": ["alarms", "menus", "notifications", "storage"],
   "optional_permissions": [
     "https://sourceforge.net/projects/portableapps/rss*",
-    "https://librewolf.dev/api/v1/repos/librewolf/bsys6/releases?limit=1"
+    "https://librewolf.dev/api/v1/repos/librewolf/bsys6/releases*"
   ],
   "icons": {
     "16": "images/status-unknown.svg",

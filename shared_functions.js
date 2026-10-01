@@ -27,16 +27,22 @@ const MOZ_UPDATE_CHECK_APIS = {
     "https://librewolf.dev/api/v1/repos/librewolf/bsys6/releases?limit=1",
   LibreWolfPortableApps:
     "https://sourceforge.net/projects/portableapps/rss?path=/LibreWolf%20Portable",
+  LibreWolfReleaseTags:
+    "https://librewolf.dev/api/v1/repos/librewolf/bsys6/releases/tags/",
   IceCat:
     "https://api.github.com/repos/ryan-steed-usa/gnu-icecat-mirror/releases/latest",
+};
+const PORTABLE_APPS_FILES = {
+  Firefox:
+    "https://sourceforge.net/projects/portableapps/files/Mozilla%20Firefox%2C%20Portable%20Ed./",
+  LibreWolf:
+    "https://sourceforge.net/projects/portableapps/files/LibreWolf%20Portable/",
 };
 const PERMISSION_PORTABLE_APPS = {
   origins: ["https://sourceforge.net/projects/portableapps/rss*"],
 };
 const PERMISSION_LIBREWOLF_DEV = {
-  origins: [
-    "https://librewolf.dev/api/v1/repos/librewolf/bsys6/releases?limit=1",
-  ],
+  origins: ["https://librewolf.dev/api/v1/repos/librewolf/bsys6/releases*"],
 };
 
 // Firefox support is implied
@@ -414,6 +420,7 @@ const updateChecker = {
     browserName,
     portableapps,
     url,
+    useCache = false,
     timeoutMs = 30000,
     maxRetries = 2,
     ttlMs = 5 * 60 * 1000,
@@ -428,7 +435,7 @@ const updateChecker = {
     // Lock
     await this.isRunning(true);
 
-    if (this.useCache && cachedEntry && now - cachedEntry.timestamp < ttlMs) {
+    if (useCache && cachedEntry && now - cachedEntry.timestamp < ttlMs) {
       if (DEV_MODE)
         console.debug(
           `updateChecker.fetchLatestVersion(): returning cached ${browserName} version for: ${url} with ${ttlMs} expiring ${cachedEntry.timestamp}:`,
@@ -654,18 +661,30 @@ const updateChecker = {
                   this.browserVersion,
                   latestResponse,
                 );
-            this.releaseUrl = `https://www.firefox.com/en-US/firefox/${this.latestVersion}/releasenotes/`;
+            if (portableapps && this.latestVersion) {
+              this.releaseUrl = PORTABLE_APPS_FILES["Firefox"];
+            } else if (!portableapps) {
+              this.releaseUrl = `https://www.firefox.com/en-US/firefox/${this.latestVersion}/releasenotes/`;
+            }
             break;
           case "LibreWolf":
             this.latestVersion = portableapps
               ? this.parsePortableAppsRSSVersion(latestResponse)
               : latestResponse[0]?.tag_name;
-            if (!portableapps) {
+            if (portableapps && this.latestVersion) {
+              const releaseResponse = await this.fetchLatestVersion(
+                "LibreWolfRelease",
+                false,
+                `${MOZ_UPDATE_CHECK_APIS["LibreWolfReleaseTags"]}${this.latestVersion}`,
+                true,
+              );
+              this.releaseUrl = PORTABLE_APPS_FILES["LibreWolf"];
+              this.changelog = releaseResponse?.body ?? null;
+            } else if (!portableapps) {
               this.releaseUrl = latestResponse?.[0]?.html_url ?? null;
               this.changelog = latestResponse?.[0]?.body ?? null;
             }
             break;
-
           case "IceCat":
             this.latestVersion = latestResponse?.tag_name;
             this.releaseUrl = latestResponse?.html_url ?? null;
